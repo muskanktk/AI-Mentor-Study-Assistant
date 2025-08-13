@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mentor – Study Assistant</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; }
+    header { padding: 2rem 1rem; text-align: center; }
+    h1 { margin: 0 0 .5rem; }
+    p.lead { color: #555; max-width: 60ch; margin: .5rem auto 0; }
+    main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .card { border: 1px solid #eee; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    a.button { display: inline-block; padding: .75rem 1rem; border-radius: 10px; text-decoration: none; border: 1px solid #222; }
+    footer { color:#666; text-align:center; padding:2rem 1rem; border-top:1px solid #eee; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mentor</h1>
+    <p class="lead">Upload notes → get visual, verbal, and hands-on study resources.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>About</h2>
+      <p>Mentor is a Streamlit-based study assistant. This page is a static site hosted on GitHub Pages.</p>
+    </div>
+
+    <!-- If/when you deploy the Streamlit app, add the live link here -->
+    <div class="card">
+      <h2>Try the App</h2>
+      <p>App link: <em>coming soon</em></p>
+      <!-- Example (after you deploy to Streamlit Cloud):
+      <p><a class="button" href="https://muskanktk-mentor.streamlit.app" target="_blank" rel="noopener">Open Mentor</a></p>
+      -->
+    </div>
+
+    <div class="card">
+      <h2>Contact</h2>
+      <p>Email: <a href="mailto:muskanktk001@gmail.com">muskanktk001@gmail.com</a></p>
+    </div>
+  </main>
+
+  <footer>
+    © <span id="y"></span> Mentor
+  </footer>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>
 
