@@ -4,14 +4,14 @@ import json
 from io import BytesIO
 from datetime import datetime
 from urllib.parse import quote_plus
-from pathlib import Path
 
 import streamlit as st
 import pdfplumber
-import google.generativeai as genai
 from gtts import gTTS
+import httpx, certifi
+from dotenv import load_dotenv
 
-# Optional (safe to keep; OCR is off by default below)
+# -------- Optional OCR (kept off by default) ----------
 try:
     import pypdfium2 as pdfium
     import pytesseract
@@ -20,58 +20,53 @@ try:
 except Exception:
     OCR_AVAILABLE = False
 
-# ---- Optional utilities
-import httpx, certifi
-from dotenv import load_dotenv
-
-# ----------------- Page + Env -----------------
+# -------- Page & env ----------
 st.set_page_config(page_title="AI Generated Study Assistant", layout="centered")
 load_dotenv()
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
-# ----------------- Secrets / API Keys -----------------
-GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", os.getenv("GOOGLE_API_KEY", ""))
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))  # not used in cloud-only mode
-GROQ_API_KEY   = st.secrets.get("GROQ_API_KEY",   os.getenv("GROQ_API_KEY",   ""))  # not used in cloud-only mode
+# -------- Secrets / API Keys ----------
+OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
 
-# Configure Gemini (required)
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
-else:
-    st.error("GOOGLE_API_KEY is missing. Add it in: Streamlit → Settings → Secrets.")
+if not OPENAI_API_KEY:
+    st.error("OPENAI_API_KEY is missing. Add it in Streamlit → Settings → Secrets.")
     st.stop()
 
-# ----------------- Styling -----------------
+# -------- OpenAI client (SDK v1.x) ----------
+from openai import OpenAI
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Choose your model:
+# - "gpt-4o-mini" (cheap/fast, great for summaries)
+# - "gpt-4o" (higher quality, more expensive)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+# -------- Styling ----------
 st.markdown("""
-    <style>
-    :root{
-        --bg: #f7f3e9; --card: #ffffff; --text: #111111; --muted: #4b4b4b;
-        --accent: #ff7a00; --accent-hover: #cc6300; --border: #e9e3d5;
-    }
-    .stApp { background: var(--bg); color: var(--text); }
-    p, span, label, li, div, code, .stMarkdown, .stText, .stCaption { color: var(--text); }
-    a, a:visited { color: var(--accent) !important; } a:hover { color: var(--accent-hover) !important; }
-    h1, h2, h3, h4 { color: var(--text); font-weight: 800; letter-spacing: 0.2px; }
-    .hero-sub { color: var(--muted); }
-    .stTabs [role="tablist"] { border-bottom: 1px solid var(--border); gap: 0.25rem; }
-    .stTabs [role="tab"] { background: transparent; color: var(--muted); border: none; padding: 10px 16px; font-weight: 700; }
-    .stTabs [role="tab"]:hover { color: var(--text); }
-    .stTabs [role="tab"][aria-selected="true"] { color: var(--text); border-bottom: 3px solid var(--accent); }
-    .stButton > button {
-        background: var(--accent); color: #fff; border-radius: 10px; border: 1px solid var(--accent);
-        padding: 10px 18px; font-weight: 800; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .stButton > button:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
-    .stSelectbox label, .stCheckbox label { color: var(--text); }
-    .stFileUploader { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.07); margin-bottom: 20px; }
-    .card h3 { color: var(--accent-hover); margin-top: 0; font-weight: 900; }
-    .stDownloadButton > button { background: #fff; color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; }
-    .stDownloadButton > button:hover { border-color: var(--accent); color: var(--accent-hover); }
-    </style>
+<style>
+:root{ --bg:#f7f3e9; --card:#fff; --text:#111; --muted:#4b4b4b; --accent:#ff7a00; --accent-hover:#cc6300; --border:#e9e3d5;}
+.stApp{ background:var(--bg); color:var(--text); }
+p,span,label,li,div,code,.stMarkdown,.stText,.stCaption{ color:var(--text); }
+a,a:visited{ color:var(--accent)!important; } a:hover{ color:var(--accent-hover)!important; }
+h1,h2,h3,h4{ color:var(--text); font-weight:800; letter-spacing:.2px;}
+.hero-sub{ color:var(--muted); }
+.stTabs [role="tablist"]{ border-bottom:1px solid var(--border); gap:.25rem;}
+.stTabs [role="tab"]{ background:transparent; color:var(--muted); border:none; padding:10px 16px; font-weight:700;}
+.stTabs [role="tab"]:hover{ color:var(--text);}
+.stTabs [role="tab"][aria-selected="true"]{ color:var(--text); border-bottom:3px solid var(--accent);}
+.stButton > button{ background:var(--accent); color:#fff; border-radius:10px; border:1px solid var(--accent);
+  padding:10px 18px; font-weight:800; letter-spacing:.3px; box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.stButton > button:hover{ background:var(--accent-hover); border-color:var(--accent-hover); color:#fff;}
+.stSelectbox label,.stCheckbox label{ color:var(--text);}
+.stFileUploader{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 4px 16px rgba(0,0,0,.06);}
+.card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; box-shadow:0 6px 20px rgba(0,0,0,.07); margin-bottom:20px;}
+.card h3{ color:var(--accent-hover); margin-top:0; font-weight:900;}
+.stDownloadButton > button{ background:#fff; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 14px;}
+.stDownloadButton > button:hover{ border-color:var(--accent); color:var(--accent-hover);}
+</style>
 """, unsafe_allow_html=True)
 
-# ----------------- Hero -----------------
+# -------- Hero ----------
 st.markdown("""
 <div style="text-align:center; padding: 32px 0 8px 0;">
   <h1 style="font-size: 3rem; margin: 0;">
@@ -83,19 +78,19 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------- UI helpers -----------------
+# -------- UI helpers ----------
 def start_card(title: str):
     st.markdown(f'<div class="card"><h3>{title}</h3>', unsafe_allow_html=True)
 
 def end_card():
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ----------------- Upload -----------------
+# -------- Upload ----------
 start_card("Upload Lecture Notes")
 uploaded = st.file_uploader("Upload Lecture Notes (PDF)", type=["pdf"], key="notes_pdf")
 end_card()
 
-# ----------------- Non-AI helpers -----------------
+# -------- Non-AI helpers ----------
 def fetch_videos_for_topics(topics, per_topic=3):
     results = {}
     for t in topics:
@@ -126,13 +121,12 @@ def truncate_chars(s: str, max_chars: int = 12000) -> str:
         return ""
     return s[:max_chars]
 
-# ----------------- PDF extraction -----------------
+# -------- PDF extraction (OCR off by default) ----------
 def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
     if uploaded_file is None:
         return ""
     raw = uploaded_file.getvalue()
 
-    # Try text extraction with pdfplumber
     text_plumber = ""
     try:
         with pdfplumber.open(io.BytesIO(raw)) as pdf:
@@ -150,7 +144,6 @@ def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
     if not OCR_AVAILABLE:
         return (text_plumber + "\n\n(OCR not available — install pypdfium2, pytesseract, pillow)").strip()
 
-    # OCR fallback
     ocr_text = []
     try:
         doc = pdfium.PdfDocument(raw)
@@ -162,10 +155,26 @@ def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
     except Exception as e:
         ocr_text.append(f"(OCR failed: {e})")
 
-    combined = (text_plumber + "\n" + "\n.join(ocr_text)").strip()
+    combined = (text_plumber + "\n" + "\n".join(ocr_text)).strip()
     return combined if combined else text_plumber.strip()
 
-# ----------------- AI helpers -----------------
+# -------- OpenAI helpers ----------
+def openai_complete(prompt: str, temperature=0.25, max_tokens=900) -> str:
+    """
+    Uses OpenAI Chat Completions API (SDK v1.x).
+    """
+    try:
+        resp = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return (resp.choices[0].message.content or "").strip()
+    except Exception as e:
+        st.error(f"OpenAI Error: {type(e).__name__}: {e}")
+        return "(AI failed)"
+
 def split_text(text: str, max_chars: int = 15000, overlap: int = 800) -> list:
     if not text:
         return []
@@ -173,34 +182,19 @@ def split_text(text: str, max_chars: int = 15000, overlap: int = 800) -> list:
     while i < n:
         end = min(i + max_chars, n)
         chunks.append(text[i:end])
-        if end == n:
-            break
+        if end == n: break
         i = max(0, end - overlap)
     return chunks
 
-def gemini_complete(prompt: str, temperature=0.3, max_output_tokens=2000) -> str:
-    try:
-        model = genai.GenerativeModel('gemini-1.5-pro-latest')
-        response = model.generate_content(
-            prompt,
-            generation_config={"temperature": temperature, "max_output_tokens": max_output_tokens}
-        )
-        return (getattr(response, "text", "") or "").strip()
-    except Exception as e:
-        st.error(f"Gemini Error: {str(e)}")
-        return f"(AI failed: {type(e).__name__})"
-
-# Always use Gemini (cloud)
 def smart_complete(prompt: str, temperature=0.25, max_output_tokens=900) -> str:
-    return gemini_complete(prompt, temperature=temperature, max_output_tokens=max_output_tokens)
+    # Always use OpenAI in this cloud-only version
+    return openai_complete(prompt, temperature=temperature, max_tokens=max_output_tokens)
 
 def ai_summarize_full(full_text: str) -> str:
     chunks = split_text(full_text, max_chars=15000, overlap=800)
     if not chunks:
         return "No text found in the PDF."
-
-    engine_name = "Gemini"
-    st.write(f"Detected {len(chunks)} chunks. Summarizing with **{engine_name}**…")
+    st.write(f"Detected {len(chunks)} chunks. Summarizing with **OpenAI ({OPENAI_MODEL})**…")
     prog = st.progress(0)
 
     chunk_summaries = []
@@ -258,7 +252,13 @@ def ai_extract_topics(full_text: str, max_topics: int = 6) -> list:
     except Exception:
         return []
 
-# ----------------- Main flow -----------------
+# -------- Main flow ----------
+def start_card(title: str):
+    st.markdown(f'<div class="card"><h3>{title}</h3>', unsafe_allow_html=True)
+
+def end_card():
+    st.markdown("</div>", unsafe_allow_html=True)
+
 if uploaded:
     tabs = st.tabs(["Visual", "Verbal", "Hands-on", "Export"])
 
@@ -286,7 +286,7 @@ if uploaded:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"{prefix}_{ts}"
 
-    # ---------- Visual ----------
+    # --- Visual ---
     with tabs[0]:
         st.subheader("🎥 Visual (Videos)")
         if st.button("Detect Topics"):
@@ -309,7 +309,7 @@ if uploaded:
         else:
             st.info("Click **Detect Topics** to populate video resources.")
 
-    # ---------- Verbal ----------
+    # --- Verbal ---
     with tabs[1]:
         st.subheader("📝 Verbal (Rich FULL Summary + Voiceover)")
         text = ensure_text()
@@ -350,7 +350,7 @@ if uploaded:
         else:
             st.info("Click **Generate Rich FULL Summary (entire PDF)** to create a comprehensive, analogy-filled summary and voiceover.")
 
-    # ---------- Hands-on ----------
+    # --- Hands-on ---
     with tabs[2]:
         st.subheader("🧪 Hands-on (Interactives)")
         detected_topics = st.session_state.get("detected_topics", [])
@@ -364,7 +364,7 @@ if uploaded:
                     st.markdown(f"- [{it['title']}]({it['url']}) — {it['note']}")
             st.session_state["sims"] = sims
 
-    # ---------- Export ----------
+    # --- Export ---
     with tabs[3]:
         st.subheader("📦 Export Study Pack")
         detected_topics = st.session_state.get("detected_topics", [])
@@ -423,5 +423,5 @@ if uploaded:
             mime="text/markdown",
         )
 
-# ----------------- Footer -----------------
-st.caption("AI-powered study assistant — Gemini")
+# -------- Footer ----------
+st.caption(f"AI-powered study assistant — OpenAI ({OPENAI_MODEL})")
