@@ -1,3 +1,4 @@
+# app.py
 import os
 import io
 import json
@@ -36,13 +37,37 @@ if not OPENAI_API_KEY:
 from openai import OpenAI
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# Choose your model:
+# Choose your default model:
 # - "gpt-4o-mini" (cheap/fast, great for summaries)
 # - "gpt-4o" (higher quality, more expensive)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+# ---- Settings (sidebar) ----
+with st.sidebar:
+    st.header("⚙️ Settings")
+    MODEL_OPTIONS = ["gpt-4o-mini", "gpt-4o"]
+    st.session_state.setdefault(
+        "model", OPENAI_MODEL if OPENAI_MODEL in MODEL_OPTIONS else "gpt-4o-mini"
+    )
+    st.session_state["model"] = st.selectbox(
+        "Model", MODEL_OPTIONS, index=MODEL_OPTIONS.index(st.session_state["model"])
+    )
+    st.session_state.setdefault("temperature", 0.25)
+    st.session_state["temperature"] = st.slider(
+        "Creativity (temperature)",
+        0.0,
+        1.0,
+        float(st.session_state["temperature"]),
+        0.05,
+    )
+    st.session_state.setdefault("max_tokens", 900)
+    st.session_state["max_tokens"] = st.slider(
+        "Max output tokens", 200, 4000, int(st.session_state["max_tokens"]), 50
+    )
+
 # -------- Styling ----------
-st.markdown("""
+st.markdown(
+    """
 <style>
 :root{ --bg:#f7f3e9; --card:#fff; --text:#111; --muted:#4b4b4b; --accent:#ff7a00; --accent-hover:#cc6300; --border:#e9e3d5;}
 .stApp{ background:var(--bg); color:var(--text); }
@@ -64,10 +89,13 @@ h1,h2,h3,h4{ color:var(--text); font-weight:800; letter-spacing:.2px;}
 .stDownloadButton > button{ background:#fff; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 14px;}
 .stDownloadButton > button:hover{ border-color:var(--accent); color:var(--accent-hover);}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # -------- Hero ----------
-st.markdown("""
+st.markdown(
+    """
 <div style="text-align:center; padding: 32px 0 8px 0;">
   <h1 style="font-size: 3rem; margin: 0;">
     <span>Chat with </span><span style="color:#ff7a00;">AI</span>
@@ -76,7 +104,9 @@ st.markdown("""
     Simply upload your notes and get <b>visual</b>, <b>verbal</b>, and <b>hands-on</b> study resources.
   </p>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # -------- UI helpers ----------
 def start_card(title: str):
@@ -96,18 +126,24 @@ def fetch_videos_for_topics(topics, per_topic=3):
     for t in topics:
         q = quote_plus(f"{t} explained for beginners")
         url = f"https://www.youtube.com/results?search_query={q}"
-        results[t] = [{"title": f"YouTube search: {t}", "url": url, "note": "Open for multiple videos"}]
+        results[t] = [
+            {
+                "title": f"YouTube search: {t}",
+                "url": url,
+                "note": "Open for multiple videos",
+            }
+        ]
     return results
 
 def build_sim_search_links(topic: str):
     sites = [
-        ('PhET (science sims)',       'site:phet.colorado.edu "{q}" simulation'),
-        ('Khan Academy practice',     'site:khanacademy.org "{q}" practice'),
-        ('Desmos activities',         'site:teacher.desmos.com "{q}" activity'),
-        ('GeoGebra interactives',     'site:geogebra.org "{q}"'),
-        ('FreeCodeCamp (coding)',     'site:freecodecamp.org "{q}" tutorial'),
+        ("PhET (science sims)", 'site:phet.colorado.edu "{q}" simulation'),
+        ("Khan Academy practice", 'site:khanacademy.org "{q}" practice'),
+        ("Desmos activities", 'site:teacher.desmos.com "{q}" activity'),
+        ("GeoGebra interactives", 'site:geogebra.org "{q}"'),
+        ("FreeCodeCamp (coding)", 'site:freecodecamp.org "{q}" tutorial'),
         ('W3Schools Try-It (coding)', 'site:w3schools.com "Tryit" "{q}"'),
-        ('MDN Playground (JS)',       'site:developer.mozilla.org "{q}" example'),
+        ("MDN Playground (JS)", 'site:developer.mozilla.org "{q}" example'),
     ]
     items = []
     for title, template in sites:
@@ -122,6 +158,7 @@ def truncate_chars(s: str, max_chars: int = 12000) -> str:
     return s[:max_chars]
 
 # -------- PDF extraction (OCR off by default) ----------
+@st.cache_data(show_spinner=False)
 def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
     if uploaded_file is None:
         return ""
@@ -155,20 +192,20 @@ def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
     except Exception as e:
         ocr_text.append(f"(OCR failed: {e})")
 
-    combined = (text_plumber + "\n" + "\n".join(ocr_text)).strip()
+    combined = (text_plumber + "\n" + "\n.join(ocr_text)").strip()
     return combined if combined else text_plumber.strip()
 
 # -------- OpenAI helpers ----------
-def openai_complete(prompt: str, temperature=0.25, max_tokens=900) -> str:
+def openai_complete(prompt: str, temperature=None, max_tokens=None) -> str:
     """
     Uses OpenAI Chat Completions API (SDK v1.x).
     """
     try:
         resp = client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=st.session_state.get("model", "gpt-4o-mini"),
             messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            max_tokens=max_tokens,
+            temperature=float(st.session_state.get("temperature", 0.25) if temperature is None else temperature),
+            max_tokens=int(st.session_state.get("max_tokens", 900) if max_tokens is None else max_tokens),
         )
         return (resp.choices[0].message.content or "").strip()
     except Exception as e:
@@ -182,19 +219,19 @@ def split_text(text: str, max_chars: int = 15000, overlap: int = 800) -> list:
     while i < n:
         end = min(i + max_chars, n)
         chunks.append(text[i:end])
-        if end == n: break
+        if end == n:
+            break
         i = max(0, end - overlap)
     return chunks
 
 def smart_complete(prompt: str, temperature=0.25, max_output_tokens=900) -> str:
-    # Always use OpenAI in this cloud-only version
     return openai_complete(prompt, temperature=temperature, max_tokens=max_output_tokens)
 
 def ai_summarize_full(full_text: str) -> str:
     chunks = split_text(full_text, max_chars=15000, overlap=800)
     if not chunks:
         return "No text found in the PDF."
-    st.write(f"Detected {len(chunks)} chunks. Summarizing with **OpenAI ({OPENAI_MODEL})**…")
+    st.write(f"Detected {len(chunks)} chunks. Summarizing with **OpenAI ({st.session_state.get('model','gpt-4o-mini')})**…")
     prog = st.progress(0)
 
     chunk_summaries = []
@@ -252,39 +289,51 @@ def ai_extract_topics(full_text: str, max_topics: int = 6) -> list:
     except Exception:
         return []
 
-# -------- Main flow ----------
-def start_card(title: str):
-    st.markdown(f'<div class="card"><h3>{title}</h3>', unsafe_allow_html=True)
+# ---- TTS helpers (OpenAI TTS + gTTS fallback) ----
+@st.cache_data(show_spinner=False)
+def tts_bytes(text: str, lang: str = "en", slow: bool = False) -> bytes:
+    if not text or not text.strip():
+        return b""
+    fp = BytesIO()
+    gTTS(text, lang=lang, slow=slow).write_to_fp(fp)
+    fp.seek(0)
+    return fp.read()
 
-def end_card():
-    st.markdown("</div>", unsafe_allow_html=True)
+def tts_openai(text: str, voice: str = "alloy") -> bytes:
+    if not text.strip():
+        return b""
+    try:
+        # gpt-4o-mini-tts supports multiple voices (e.g., alloy, verse, aria, coral, sage, lumen)
+        resp = client.audio.speech.create(
+            model="gpt-4o-mini-tts",
+            voice=voice,
+            input=text
+        )
+        # SDK returns a streaming-like object; .read() yields bytes
+        return resp.read()
+    except Exception as e:
+        st.warning(f"OpenAI TTS failed ({e}); falling back to gTTS.")
+        return tts_bytes(text, lang="en", slow=False)
 
+# -------- State init --------
+if "extracted_text" not in st.session_state:
+    st.session_state["extracted_text"] = None
+if "full_summary" not in st.session_state:
+    st.session_state["full_summary"] = None
+
+def ensure_text():
+    if st.session_state["extracted_text"] is None:
+        with st.spinner("Extracting text from PDF…"):
+            st.session_state["extracted_text"] = extract_pdf_text(uploaded, use_ocr=False)
+    return st.session_state["extracted_text"]
+
+def safe_slug(prefix: str = "summary") -> str:
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{prefix}_{ts}"
+
+# -------- Tabs --------
 if uploaded:
-    tabs = st.tabs(["Visual", "Verbal", "Hands-on", "Export"])
-
-    if "extracted_text" not in st.session_state:
-        st.session_state["extracted_text"] = None
-    if "full_summary" not in st.session_state:
-        st.session_state["full_summary"] = None
-
-    def ensure_text():
-        if st.session_state["extracted_text"] is None:
-            with st.spinner("Extracting text from PDF…"):
-                st.session_state["extracted_text"] = extract_pdf_text(uploaded, use_ocr=False)
-        return st.session_state["extracted_text"]
-
-    @st.cache_data(show_spinner=False)
-    def tts_bytes(text: str, lang: str = "en", slow: bool = False) -> bytes:
-        if not text or not text.strip():
-            return b""
-        fp = BytesIO()
-        gTTS(text, lang=lang, slow=slow).write_to_fp(fp)
-        fp.seek(0)
-        return fp.read()
-
-    def safe_slug(prefix: str = "summary") -> str:
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"{prefix}_{ts}"
+    tabs = st.tabs(["Visual", "Verbal", "Hands-on", "Quiz", "Export"])
 
     # --- Visual ---
     with tabs[0]:
@@ -330,15 +379,18 @@ if uploaded:
                 mime="text/markdown",
             )
 
-            col1, col2, _ = st.columns([1, 1, 2])
+            col1, col2 = st.columns([2, 1])
             with col1:
-                lang = st.selectbox("Voice", ["en", "ur", "hi"], index=0)
+                voice = st.selectbox("🎙️ Voice (OpenAI TTS)", ["alloy", "verse", "aria", "coral", "sage", "lumen"], index=0)
             with col2:
-                slow = st.checkbox("Slow", value=False)
+                engine = st.selectbox("Engine", ["OpenAI TTS", "gTTS (fallback)"], index=0)
 
             if st.button("Generate Voiceover (from FULL summary)"):
                 with st.spinner("Generating voiceover…"):
-                    audio_data = tts_bytes(full_summary, lang=lang, slow=slow)
+                    if engine == "OpenAI TTS":
+                        audio_data = tts_openai(full_summary, voice=voice)
+                    else:
+                        audio_data = tts_bytes(full_summary, lang="en", slow=False)
                 if audio_data:
                     st.audio(audio_data, format="audio/mp3")
                     st.download_button(
@@ -364,12 +416,119 @@ if uploaded:
                     st.markdown(f"- [{it['title']}]({it['url']}) — {it['note']}")
             st.session_state["sims"] = sims
 
-    # --- Export ---
+        # --- Semantic search over notes ---
+        st.markdown("---")
+        st.subheader("🔎 Search your notes (semantic)")
+        import numpy as np  # local import to keep top light
+
+        @st.cache_data(show_spinner=False)
+        def embed_texts(texts: list[str]) -> np.ndarray:
+            embs = client.embeddings.create(model="text-embedding-3-small", input=texts)
+            return np.array([e.embedding for e in embs.data], dtype="float32")
+
+        def cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
+            denom = (np.linalg.norm(a) * np.linalg.norm(b)) or 1e-8
+            return float(np.dot(a, b) / denom)
+
+        q = st.text_input("Ask a question about your PDF")
+        if st.button("Search") and q.strip():
+            base_text = ensure_text()
+            chunks = split_text(base_text, max_chars=1200, overlap=120)
+            if not chunks:
+                st.warning("No text found to search.")
+            else:
+                with st.spinner("Searching…"):
+                    doc_embs = embed_texts(chunks)
+                    q_emb = embed_texts([q])[0]
+                    sims = [cosine_sim(q_emb, d) for d in doc_embs]
+                    top_idx = int(np.argmax(sims))
+                    context = chunks[top_idx]
+                    answer = smart_complete(
+                        f"Use ONLY this context to answer concisely (<=120 words):\n\n{context}\n\nQ: {q}\nA:",
+                        temperature=0.0,
+                        max_output_tokens=220,
+                    )
+                st.write("**Answer:**", answer)
+                with st.expander("Context"):
+                    st.write(context)
+
+    # --- Quiz ---
     with tabs[3]:
+        st.subheader("❓ Quiz (Auto-generated MCQs)")
+        text = ensure_text()
+        num_q = st.slider("Number of questions", 3, 15, 6, 1)
+        if st.button("Generate Quiz"):
+            with st.spinner("Generating quiz…"):
+                prompt = (
+                    "Create a JSON array of multiple-choice questions from these notes.\n"
+                    "Each item should have keys: question, choices (array of 4), answer_index (0-3), and explanation.\n"
+                    f"Notes:\n{truncate_chars(text, 9000)}\n"
+                )
+                raw = smart_complete(prompt, temperature=0.2, max_output_tokens=1000)
+                try:
+                    j = json.loads(raw.replace("```json","").replace("```","").strip())
+                    quiz = j[:num_q]
+                except Exception:
+                    prompt2 = (
+                        "Return STRICT JSON array like:\n"
+                        '[{"question":"Q?","choices":["A","B","C","D"],"answer_index":0,"explanation":"..."}]\n'
+                        f"Use these notes:\n{truncate_chars(text, 8000)}"
+                    )
+                    raw2 = smart_complete(prompt2, temperature=0.2, max_output_tokens=1000)
+                    j2 = json.loads(raw2.replace("```json","").replace("```","").strip())
+                    quiz = j2[:num_q]
+
+            st.session_state["quiz"] = quiz
+
+        quiz = st.session_state.get("quiz", [])
+        if quiz:
+            for i, q in enumerate(quiz, 1):
+                st.markdown(f"**Q{i}. {q['question']}**")
+                idx = st.radio(
+                    "Choose one:",
+                    options=list(range(4)),
+                    format_func=lambda k: q["choices"][k],
+                    key=f"q_{i}"
+                )
+                if st.button(f"Check Q{i}", key=f"chk_{i}"):
+                    st.info(f"Answer: {q['choices'][q['answer_index']]}")
+                    st.caption(q.get("explanation", ""))
+            if st.download_button(
+                "Download Quiz (JSON)",
+                data=json.dumps(quiz, indent=2).encode("utf-8"),
+                file_name="quiz.json",
+                mime="application/json",
+            ):
+                pass
+        else:
+            st.info("Click **Generate Quiz** to create practice questions from your notes.")
+
+    # --- Export ---
+    with tabs[4]:
         st.subheader("📦 Export Study Pack")
+
         detected_topics = st.session_state.get("detected_topics", [])
         videos = st.session_state.get("videos", {})
         sims = st.session_state.get("sims", {})
+
+        # ---- Flashcards (Q/A) ----
+        if st.button("Generate Flashcards (Q→A)"):
+            full_text = st.session_state.get("extracted_text", "") or ensure_text()
+            with st.spinner("Writing flashcards…"):
+                prompt = (
+                    "Extract 20 concise flashcard pairs from the notes as TSV lines 'Q\\tA'. "
+                    "Keep each side ≤ 120 chars; prefer definitions, laws, formulas.\n\n"
+                    f"Notes:\n{truncate_chars(full_text, 9000)}"
+                )
+                cards = smart_complete(prompt, temperature=0.2, max_output_tokens=900)
+                lines = [ln for ln in cards.splitlines() if "\t" in ln]
+                tsv = "\n".join(lines) if lines else cards
+            st.download_button(
+                "Download flashcards.tsv",
+                data=tsv.encode("utf-8"),
+                file_name="flashcards.tsv",
+                mime="text/tab-separated-values",
+            )
 
         topics_md = "\n".join(f"- {t}" for t in detected_topics) if detected_topics else "_No topics detected yet._"
 
@@ -424,4 +583,4 @@ if uploaded:
         )
 
 # -------- Footer ----------
-st.caption(f"AI-powered study assistant — OpenAI ({OPENAI_MODEL})")
+st.caption(f"AI-powered study assistant — OpenAI ({st.session_state.get('model','gpt-4o-mini')})")
