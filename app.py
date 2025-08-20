@@ -42,28 +42,6 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 # - "gpt-4o" (higher quality, more expensive)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-# ---- Settings (sidebar) ----
-with st.sidebar:
-    st.header("⚙️ Settings")
-    MODEL_OPTIONS = ["gpt-4o-mini", "gpt-4o"]
-    st.session_state.setdefault(
-        "model", OPENAI_MODEL if OPENAI_MODEL in MODEL_OPTIONS else "gpt-4o-mini"
-    )
-    st.session_state["model"] = st.selectbox(
-        "Model", MODEL_OPTIONS, index=MODEL_OPTIONS.index(st.session_state["model"])
-    )
-    st.session_state.setdefault("temperature", 0.25)
-    st.session_state["temperature"] = st.slider(
-        "Creativity (temperature)",
-        0.0,
-        1.0,
-        float(st.session_state["temperature"]),
-        0.05,
-    )
-    st.session_state.setdefault("max_tokens", 900)
-    st.session_state["max_tokens"] = st.slider(
-        "Max output tokens", 200, 4000, int(st.session_state["max_tokens"]), 50
-    )
 
 # -------- Styling ----------
 st.markdown(
