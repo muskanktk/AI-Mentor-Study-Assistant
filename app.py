@@ -41,15 +41,23 @@ if not OPENAI_API_KEY:
     
 # import OpenAI for usage
 from openai import OpenAI
+
+# Create a client to connect to OpenAI (authenticated with our API key)
+# Set which AI model version to use (default is "gpt-4o-mini")
+
 client = OpenAI(api_key=OPENAI_API_KEY)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+# imports to use summarizing 
 from reportlab.lib.pagesizes import LETTER
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.styles import ParagraphStyle
+
+# Function cleans the paragraph and sets the style
+# returns a styled Paragraph object with the given font size and bold option
 
 def _paragraph(text, size=10, bold=False):
     style = ParagraphStyle(
@@ -61,6 +69,7 @@ def _paragraph(text, size=10, bold=False):
         textColor=colors.black,
     )
     safe = text.replace("\t", "    ").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    
     return Paragraph(safe.replace("\n", "<br/>"), style)
 
 def render_pdf_bytes(title, sections):
