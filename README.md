@@ -160,7 +160,8 @@ MIT (or your preferred license). See `LICENSE`.
 ---
 
 ### Final Product
+[Uploading full_summary_20250825_181140.md…]()
 
-*Add screenshots or a short GIF here showing: PDF upload → summary → MP3 playback → quiz export.*
+
 
 ---
