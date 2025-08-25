@@ -13,11 +13,11 @@ Turn any lecture PDF into **3 learning modes**:
 
 ## 🚀 Features
 
-* ✅ **YouTube Topic Guide**: Finds videos aligned to the main concepts in your PDF.
-* ✅ **Plain-English Summary**: OpenAI condenses content, adds examples, code, and analogies.
-* ✅ **MP3 Voiceover**: Generate an audio narration of the summary with multiple voice options.
-* ✅ **Practice Mode**: Simulations and configurable quizzes (choose number of questions).
-* ✅ **One-click Export**: Save everything as a `.md` study file for safekeeping.
+*  **YouTube Topic Guide**: Finds videos aligned to the main concepts in your PDF.
+*  **Plain-English Summary**: OpenAI condenses content, adds examples, code, and analogies.
+*  **MP3 Voiceover**: Generate an audio narration of the summary with multiple voice options.
+*  **Practice Mode**: Simulations and configurable quizzes (choose number of questions).
+*  **One-click Export**: Save everything as a `.md` study file for safekeeping.
 
 
 ## 🛠️ Tech Stack
@@ -147,8 +147,8 @@ A: If OCR is enabled in your build, yes. Otherwise, use a tagged/text PDF.
 Please open an issue to discuss substantial changes first.
 
 ## License
+MIT License – see [LICENSE](LICENSE) for details.
 
-MIT (or your preferred license). See `LICENSE`.
 
 ## Acknowledgments
 
@@ -159,9 +159,9 @@ MIT (or your preferred license). See `LICENSE`.
 
 ---
 
-### Final Product
-[Uploading full_summary_20250825_181140.md…]()
+## Final Product
 
+- 🎧 Voiceover: [voiceover.mp3](https://github.com/user-attachments/files/21974774/voiceover.3.mp3)  
+- 📘 Study Pack: [study_pack.pdf](https://github.com/user-attachments/files/21974831/study_pack.pdf)  
+- 🃏 Flashcards: [flashcards.pdf](https://github.com/user-attachments/files/21974817/flashcards.pdf)  
 
-
----
