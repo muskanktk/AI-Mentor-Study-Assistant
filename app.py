@@ -150,7 +150,9 @@ st.markdown(
   <h1 style="font-size: 3rem; margin: 0;">
     <span>Chat with </span><span style="color:#ff7a00;">AI</span>
   </h1>
-  <p class="hero-sub" style="font-size: 1.05rem; margin-top: 8px;">
+
+  
+  <p class="hero-sub" style="font-size: 1.05rem; margin-top: 8px;text-align:center; ">
     Simply upload your notes and get <b>visual</b>, <b>verbal</b>, and <b>hands-on</b> study resources.
   </p>
 </div>
