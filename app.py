@@ -18,6 +18,8 @@ try:
     import pytesseract
     from PIL import Image
     OCR_AVAILABLE = True
+
+
 # No text will appear from images because libararies are not downloaded
 except Exception:
     OCR_AVAILABLE = False
@@ -60,6 +62,7 @@ from reportlab.lib.styles import ParagraphStyle
 # returns a styled Paragraph object with the given font size and bold option
 
 def _paragraph(text, size=10, bold=False):
+    
     style = ParagraphStyle(
         name="Body",
         fontName="Helvetica-Bold" if bold else "Helvetica",
@@ -72,30 +75,47 @@ def _paragraph(text, size=10, bold=False):
     
     return Paragraph(safe.replace("\n", "<br/>"), style)
 
+# creates a pdf and returns it as bytes
 def render_pdf_bytes(title, sections):
-    buf = BytesIO()
-    doc = SimpleDocTemplate(
-        buf,
+    # creates buffer for the file 
+    buffer = BytesIO()
+
+    # pdf document layout 
+    doc_pdf = SimpleDocTemplate(
+        buffer,
         pagesize=LETTER,
-        leftMargin=0.8 * inch,
-        rightMargin=0.8 * inch,
-        topMargin=0.8 * inch,
-        bottomMargin=0.8 * inch,
+        leftMargin=0.6 * inch,
+        rightMargin=0.6 * inch,
+        topMargin=0.6 * inch,
+        bottomMargin=0.6 * inch,
     )
-    story = []
-    story.append(_paragraph(title, size=16, bold=True))
-    story.append(Spacer(1, 0.20 * inch))
+
+    # Moves through the pdf adding objects
+    
+    build_pdf = []
+    build_pdf.append(_paragraph(
+        title, 
+        size=15, bold=True
+    ))
+    
+    build_pdf.append(Spacer(1, 0.20 * inch))
+    
     for sec in sections:
         if sec.get("heading"):
-            story.append(_paragraph(sec["heading"], size=12, bold=True))
-            story.append(Spacer(1, 0.06 * inch))
+            build_pdf.append(_paragraph(sec["heading"], size=13, bold=True))
+            build_pdf.append(Spacer(1, 0.05 * inch))
+            
         body = sec.get("body", "").strip() or "-"
-        story.append(_paragraph(body, size=10, bold=False))
-        story.append(Spacer(1, 0.18 * inch))
-    doc.build(story)
-    pdf = buf.getvalue()
-    buf.close()
-    return pdf
+
+        
+        build_pdf .append(_paragraph(body, size=10, bold=False))
+        build_pdf .append(Spacer(1, 0.18 * inch))
+        
+    doc.build(build_pdf )
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    
+    return pdf_bytes
 
 st.markdown(
     """
