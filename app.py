@@ -1,3 +1,4 @@
+# imports needed for the program 
 import os
 import io
 import json
@@ -11,23 +12,34 @@ from gtts import gTTS
 import httpx, certifi
 from dotenv import load_dotenv
 
+# Preventing crashing of program with an exception if missing imports are given
 try:
     import pypdfium2 as pdfium
     import pytesseract
     from PIL import Image
     OCR_AVAILABLE = True
+# No text will appear from images because libararies are not downloaded
 except Exception:
     OCR_AVAILABLE = False
 
+# Title of the program 
 st.set_page_config(page_title="AI Generated Study Assistant", layout="centered")
-load_dotenv()
+
+# loads keys without revealing them, allows for security 
+load_dotenv() 
+
+# checks for secure connection between the computer and program
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
+# access the secret AI API key 
 OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
-if not OPENAI_API_KEY:
-    st.error("OPENAI_API_KEY is missing. Add it in Streamlit → Settings → Secrets.")
-    st.stop()
 
+# if the key is not prsesent show error and stop the program 
+if not OPENAI_API_KEY:
+    st.error("OPENAI_API_KEY is missing")
+    st.stop()
+    
+# import OpenAI for usage
 from openai import OpenAI
 client = OpenAI(api_key=OPENAI_API_KEY)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
