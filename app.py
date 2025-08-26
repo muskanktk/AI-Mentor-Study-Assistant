@@ -214,6 +214,7 @@ def truncate_chars(s: str, max_chars: int = 12000) -> str:
         return ""
     return s[:max_chars]
 
+# 
 @st.cache_data(show_spinner=False)
 def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
     if uploaded_file is None:
