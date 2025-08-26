@@ -176,12 +176,15 @@ start_card("Upload Lecture Notes")
 uploaded = st.file_uploader("Upload Lecture Notes (PDF)", type=["pdf"], key="notes_pdf")
 end_card()
 
+# fetch the youtube videos 
 def fetch_videos_for_topics(topics, per_topic=3):
     results = {}
     for t in topics:
-        q = quote_plus(f"{t} explained for beginners")
+        
+        q = quote_plus(f"{t}")
         url = f"https://www.youtube.com/results?search_query={q}"
-        results[t] = [{"title": f"YouTube search: {t}", "url": url, "note": "Open for multiple videos"}]
+        results[t] = [{"title": f"YouTube search: {t}", 
+                       "url": url, "note": "Open for multiple videos"}]
     return results
 
 def build_sim_search_links(topic: str):
