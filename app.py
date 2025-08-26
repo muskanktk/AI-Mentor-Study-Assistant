@@ -182,11 +182,13 @@ def fetch_videos_for_topics(topics, per_topic=3):
     for t in topics:
         
         q = quote_plus(f"{t} For beginners ")
-        url = f"https://www.youtube.com/results?search_query={q}"
+        url = f"https://www.youtube.com/results?search_query={q}" 
+        
         results[t] = [{"title": f"YouTube search: {t}", 
                        "url": url, "note": "Open for multiple videos"}]
     return results
 
+# search engines for the hands-on activity
 def build_sim_search_links(topic: str):
     sites = [
         ("PhET (science sims)", 'site:phet.colorado.edu "{q}" simulation'),
@@ -197,13 +199,16 @@ def build_sim_search_links(topic: str):
         ('W3Schools Try-It (coding)', 'site:w3schools.com "Tryit" "{q}"'),
         ("MDN Playground (JS)", 'site:developer.mozilla.org "{q}" example'),
     ]
+    
     items = []
     for title, template in sites:
         query = template.replace("{q}", topic)
         url = "https://www.google.com/search?q=" + quote_plus(query)
-        items.append({"title": f"{title} — {topic}", "url": url, "note": "Search results"})
+        items.append({"title": f"{title} — {topic}",
+                      "url": url, "note": "Search results"})
     return items
 
+# 
 def truncate_chars(s: str, max_chars: int = 12000) -> str:
     if s is None:
         return ""
@@ -591,4 +596,3 @@ if uploaded:
         ):
             pass
 
-st.caption(f"AI-powered study assistant — OpenAI ({st.session_state.get('model','gpt-4o-mini')})")
