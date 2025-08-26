@@ -160,19 +160,18 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
-
+# start a card container with a centered title
 def start_card(title: str):
     st.markdown(
         f'<div class="card"><h3 style="text-align:center;">{title}</h3>',
         unsafe_allow_html=True
     )
 
-
-
-# upload the file in pdf format
+# end the card container
 def end_card():
     st.markdown("</div>", unsafe_allow_html=True)
 
+# display card with centered title + file uploader inside
 start_card("Upload Lecture Notes")
 uploaded = st.file_uploader("Upload Lecture Notes (PDF)", type=["pdf"], key="notes_pdf")
 end_card()
