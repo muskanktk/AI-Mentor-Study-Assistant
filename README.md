@@ -7,7 +7,9 @@ Turn any lecture PDF into **3 learning modes**:
 3. **Hands-on practice** with simulations and quizzes.
    Optionally, generate a **voiceover MP3** of the summary in a voice you choose.
 
-**Live demo:** [https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/](https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/)
+**Live demo:** 
+
+
 **Example PDF:** [cs262\_week12\_slides (Tagged).pdf](https://github.com/user-attachments/files/21974421/cs262_week12_slides.15.1.1.-.Tagged.pdf)
 
 
