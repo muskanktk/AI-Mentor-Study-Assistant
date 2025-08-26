@@ -117,6 +117,7 @@ def render_pdf_bytes(title, sections):
     
     return pdf_bytes
 
+# content of the .md file 
 st.markdown(
     """
 <style>
@@ -143,7 +144,7 @@ h1,h2,h3,h4{ color:var(--text); font-weight:800; letter-spacing:.2px;}
 """,
     unsafe_allow_html=True,
 )
-
+# Styling for the heading
 st.markdown(
     """
 <div style="text-align:center; padding: 32px 0 8px 0;">
