@@ -162,8 +162,13 @@ st.markdown(
 )
 
 def start_card(title: str):
-    st.markdown(f'<div class="card"><h3>{title}</h3>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="card" style="text-align:center;"><h3>{title}</h3>',
+        unsafe_allow_html=True
+    )
 
+
+# upload the file in pdf format
 def end_card():
     st.markdown("</div>", unsafe_allow_html=True)
 
