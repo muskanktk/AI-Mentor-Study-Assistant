@@ -181,7 +181,7 @@ def fetch_videos_for_topics(topics, per_topic=3):
     results = {}
     for t in topics:
         
-        q = quote_plus(f"{t}")
+        q = quote_plus(f"{t} For beginners ")
         url = f"https://www.youtube.com/results?search_query={q}"
         results[t] = [{"title": f"YouTube search: {t}", 
                        "url": url, "note": "Open for multiple videos"}]
