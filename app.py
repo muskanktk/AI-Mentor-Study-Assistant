@@ -61,26 +61,14 @@ from reportlab.lib.styles import ParagraphStyle
 # Function cleans the paragraph and sets the style
 # returns a styled Paragraph object with the given font size and bold option
 
-def _paragraph(text, size=10, bold=False):
-    
-    style = ParagraphStyle(
-        name="Body",
-        fontName="Helvetica-Bold" if bold else "Helvetica",
-        fontSize=size,
-        leading=size + 2,
-        alignment=TA_LEFT,
-        textColor=colors.black,
-    )
-    safe = text.replace("\t", "    ").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    
-    return Paragraph(safe.replace("\n", "<br/>"), style)
-
-# creates a pdf and returns it as bytes
-def render_pdf_bytes(title, sections):
-    # creates buffer for the file 
+def render_pdf_bytes(title: str, sections: list[dict]) -> bytes:
+    """
+    sections: list of {"heading": str|None, "body": str}
+    Returns: PDF bytes
+    """
     buffer = BytesIO()
 
-    # pdf document layout 
+    # your variable name is doc_pdf, so use that consistently
     doc_pdf = SimpleDocTemplate(
         buffer,
         pagesize=LETTER,
@@ -90,31 +78,26 @@ def render_pdf_bytes(title, sections):
         bottomMargin=0.6 * inch,
     )
 
-    # Moves through the pdf adding objects
-    
-    build_pdf = []
-    build_pdf.append(_paragraph(
-        title, 
-        size=15, bold=True
-    ))
-    
-    build_pdf.append(Spacer(1, 0.20 * inch))
-    
+    # call this list 'elements' for clarity (it's a list of Flowables)
+    elements = []
+    elements.append(_paragraph(title, size=15, bold=True))
+    elements.append(Spacer(1, 0.20 * inch))
+
     for sec in sections:
         if sec.get("heading"):
-            build_pdf.append(_paragraph(sec["heading"], size=13, bold=True))
-            build_pdf.append(Spacer(1, 0.05 * inch))
-            
-        body = sec.get("body", "").strip() or "-"
+            elements.append(_paragraph(sec["heading"], size=13, bold=True))
+            elements.append(Spacer(1, 0.05 * inch))
 
-        
-        build_pdf .append(_paragraph(body, size=10, bold=False))
-        build_pdf .append(Spacer(1, 0.18 * inch))
-        
-    doc_pdf.build(build_pdf )
-    pdf_bytes = buffer.getvalue()
+        body = (sec.get("body", "") or "").strip() or "-"
+        elements.append(_paragraph(body, size=10, bold=False))
+        elements.append(Spacer(1, 0.18 * inch))
+
+    # the bug was here: use doc_pdf (not doc), pass the list (not a function)
+    doc_pdf.build(elements)
+
+    buffer.seek(0)
+    pdf_bytes = buffer.read()
     buffer.close()
-    
     return pdf_bytes
 
 # content of the .md file 
