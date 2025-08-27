@@ -111,7 +111,7 @@ def render_pdf_bytes(title, sections):
         build_pdf .append(_paragraph(body, size=10, bold=False))
         build_pdf .append(Spacer(1, 0.18 * inch))
         
-    doc.build(build_pdf )
+    doc_pdf.build(build_pdf )
     pdf_bytes = buffer.getvalue()
     buffer.close()
     
