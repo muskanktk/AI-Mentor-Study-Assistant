@@ -1,4 +1,4 @@
-# imports needed for the program 
+
 import os
 import io
 import json
@@ -12,95 +12,38 @@ from gtts import gTTS
 import httpx, certifi
 from dotenv import load_dotenv
 
-# Preventing crashing of program with an exception if missing imports are given
+# -------- Optional OCR (kept off by default) ----------
 try:
     import pypdfium2 as pdfium
     import pytesseract
-    from PIL import Image
+    from PIL import Image  # noqa: F401
     OCR_AVAILABLE = True
-
-
-# No text will appear from images because libararies are not downloaded
 except Exception:
     OCR_AVAILABLE = False
 
-# Title of the program 
+# -------- Page & env ----------
 st.set_page_config(page_title="AI Generated Study Assistant", layout="centered")
-
-# loads keys without revealing them, allows for security 
-load_dotenv() 
-
-# checks for secure connection between the computer and program
+load_dotenv()
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
-# access the secret AI API key 
+# -------- Secrets / API Keys ----------
 OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
 
-# if the key is not prsesent show error and stop the program 
 if not OPENAI_API_KEY:
-    st.error("OPENAI_API_KEY is missing")
+    st.error("OPENAI_API_KEY is missing. Add it in Streamlit → Settings → Secrets.")
     st.stop()
-    
-# import OpenAI for usage
+
+# -------- OpenAI client (SDK v1.x) ----------
 from openai import OpenAI
-
-# Create a client to connect to OpenAI (authenticated with our API key)
-# Set which AI model version to use (default is "gpt-4o-mini")
-
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Choose your default model:
+# - "gpt-4o-mini" (cheap/fast, great for summaries)
+# - "gpt-4o" (higher quality, more expensive)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-# imports to use summarizing 
-from reportlab.lib.pagesizes import LETTER
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.units import inch
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_LEFT
-from reportlab.lib.styles import ParagraphStyle
 
-# Function cleans the paragraph and sets the style
-# returns a styled Paragraph object with the given font size and bold option
-
-def render_pdf_bytes(title: str, sections: list[dict]) -> bytes:
-    """
-    sections: list of {"heading": str|None, "body": str}
-    Returns: PDF bytes
-    """
-    buffer = BytesIO()
-
-    # your variable name is doc_pdf, so use that consistently
-    doc_pdf = SimpleDocTemplate(
-        buffer,
-        pagesize=LETTER,
-        leftMargin=0.6 * inch,
-        rightMargin=0.6 * inch,
-        topMargin=0.6 * inch,
-        bottomMargin=0.6 * inch,
-    )
-
-    # call this list 'elements' for clarity (it's a list of Flowables)
-    elements = []
-    elements.append(_paragraph(title, size=15, bold=True))
-    elements.append(Spacer(1, 0.20 * inch))
-
-    for sec in sections:
-        if sec.get("heading"):
-            elements.append(_paragraph(sec["heading"], size=13, bold=True))
-            elements.append(Spacer(1, 0.05 * inch))
-
-        body = (sec.get("body", "") or "").strip() or "-"
-        elements.append(_paragraph(body, size=10, bold=False))
-        elements.append(Spacer(1, 0.18 * inch))
-
-    # the bug was here: use doc_pdf (not doc), pass the list (not a function)
-    doc_pdf.build(elements)
-
-    buffer.seek(0)
-    pdf_bytes = buffer.read()
-    buffer.close()
-    return pdf_bytes
-
-# content of the .md file 
+# -------- Styling ----------
 st.markdown(
     """
 <style>
@@ -127,51 +70,49 @@ h1,h2,h3,h4{ color:var(--text); font-weight:800; letter-spacing:.2px;}
 """,
     unsafe_allow_html=True,
 )
-# Styling for the heading
+
+# -------- Hero ----------
 st.markdown(
     """
 <div style="text-align:center; padding: 32px 0 8px 0;">
   <h1 style="font-size: 3rem; margin: 0;">
     <span>Chat with </span><span style="color:#ff7a00;">AI</span>
   </h1>
-
-  
-  <p class="hero-sub" style="font-size: 1.05rem; margin-top: 8px;text-align:center; ">
+  <p class="hero-sub" style="font-size: 1.05rem; margin-top: 8px;">
     Simply upload your notes and get <b>visual</b>, <b>verbal</b>, and <b>hands-on</b> study resources.
   </p>
 </div>
 """,
     unsafe_allow_html=True,
 )
-# start a card container with a centered title
-def start_card(title: str):
-    st.markdown(
-        f'<div class="card"><h3 style="text-align:center;">{title}</h3>',
-        unsafe_allow_html=True
-    )
 
-# end the card container
+# -------- UI helpers ----------
+def start_card(title: str):
+    st.markdown(f'<div class="card"><h3>{title}</h3>', unsafe_allow_html=True)
+
 def end_card():
     st.markdown("</div>", unsafe_allow_html=True)
 
-# display card with centered title + file uploader inside
+# -------- Upload ----------
 start_card("Upload Lecture Notes")
 uploaded = st.file_uploader("Upload Lecture Notes (PDF)", type=["pdf"], key="notes_pdf")
 end_card()
 
-# fetch the youtube videos 
+# -------- Non-AI helpers ----------
 def fetch_videos_for_topics(topics, per_topic=3):
     results = {}
     for t in topics:
-        
-        q = quote_plus(f"{t} For beginners ")
-        url = f"https://www.youtube.com/results?search_query={q}" 
-        
-        results[t] = [{"title": f"YouTube search: {t}", 
-                       "url": url, "note": "Open for multiple videos"}]
+        q = quote_plus(f"{t} explained for beginners")
+        url = f"https://www.youtube.com/results?search_query={q}"
+        results[t] = [
+            {
+                "title": f"YouTube search: {t}",
+                "url": url,
+                "note": "Open for multiple videos",
+            }
+        ]
     return results
 
-# search engines for the hands-on activity
 def build_sim_search_links(topic: str):
     sites = [
         ("PhET (science sims)", 'site:phet.colorado.edu "{q}" simulation'),
@@ -182,27 +123,25 @@ def build_sim_search_links(topic: str):
         ('W3Schools Try-It (coding)', 'site:w3schools.com "Tryit" "{q}"'),
         ("MDN Playground (JS)", 'site:developer.mozilla.org "{q}" example'),
     ]
-    
     items = []
     for title, template in sites:
         query = template.replace("{q}", topic)
         url = "https://www.google.com/search?q=" + quote_plus(query)
-        items.append({"title": f"{title} — {topic}",
-                      "url": url, "note": "Search results"})
+        items.append({"title": f"{title} — {topic}", "url": url, "note": "Search results"})
     return items
 
-# 
 def truncate_chars(s: str, max_chars: int = 12000) -> str:
     if s is None:
         return ""
     return s[:max_chars]
 
-# 
+# -------- PDF extraction (OCR off by default) ----------
 @st.cache_data(show_spinner=False)
 def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
     if uploaded_file is None:
         return ""
     raw = uploaded_file.getvalue()
+
     text_plumber = ""
     try:
         with pdfplumber.open(io.BytesIO(raw)) as pdf:
@@ -212,11 +151,14 @@ def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
                     text_plumber += t + "\n"
     except Exception:
         text_plumber = ""
+
     need_ocr = use_ocr or (len(text_plumber.strip()) < min_text_chars)
     if not need_ocr:
         return text_plumber.strip()
+
     if not OCR_AVAILABLE:
         return (text_plumber + "\n\n(OCR not available — install pypdfium2, pytesseract, pillow)").strip()
+
     ocr_text = []
     try:
         doc = pdfium.PdfDocument(raw)
@@ -227,10 +169,15 @@ def extract_pdf_text(uploaded_file, use_ocr=False, min_text_chars=1200) -> str:
             ocr_text.append(pytesseract.image_to_string(pil_img))
     except Exception as e:
         ocr_text.append(f"(OCR failed: {e})")
-    combined = (text_plumber + "\n" + "\n".join(ocr_text)).strip()
+
+    combined = (text_plumber + "\n" + "\n.join(ocr_text)").strip()
     return combined if combined else text_plumber.strip()
 
+# -------- OpenAI helpers ----------
 def openai_complete(prompt: str, temperature=None, max_tokens=None) -> str:
+    """
+    Uses OpenAI Chat Completions API (SDK v1.x).
+    """
     try:
         resp = client.chat.completions.create(
             model=st.session_state.get("model", "gpt-4o-mini"),
@@ -264,6 +211,7 @@ def ai_summarize_full(full_text: str) -> str:
         return "No text found in the PDF."
     st.write(f"Detected {len(chunks)} chunks. Summarizing with **OpenAI ({st.session_state.get('model','gpt-4o-mini')})**…")
     prog = st.progress(0)
+
     chunk_summaries = []
     for i, ch in enumerate(chunks, start=1):
         prompt = (
@@ -281,6 +229,7 @@ def ai_summarize_full(full_text: str) -> str:
         s = smart_complete(prompt, temperature=0.2, max_output_tokens=600)
         chunk_summaries.append(f"### Chunk {i}\n{s}")
         prog.progress(i / len(chunks))
+
     merged_input = "\n\n".join(chunk_summaries)
     prompt = (
         "Merge these chunk summaries into ONE cohesive study guide in Markdown. "
@@ -318,6 +267,7 @@ def ai_extract_topics(full_text: str, max_topics: int = 6) -> list:
     except Exception:
         return []
 
+# ---- TTS helpers (OpenAI TTS + gTTS fallback) ----
 @st.cache_data(show_spinner=False)
 def tts_bytes(text: str, lang: str = "en", slow: bool = False) -> bytes:
     if not text or not text.strip():
@@ -331,16 +281,19 @@ def tts_openai(text: str, voice: str = "alloy") -> bytes:
     if not text.strip():
         return b""
     try:
+        # gpt-4o-mini-tts supports multiple voices (e.g., alloy, verse, aria, coral, sage, lumen)
         resp = client.audio.speech.create(
             model="gpt-4o-mini-tts",
             voice=voice,
             input=text
         )
+        # SDK returns a streaming-like object; .read() yields bytes
         return resp.read()
     except Exception as e:
         st.warning(f"OpenAI TTS failed ({e}); falling back to gTTS.")
         return tts_bytes(text, lang="en", slow=False)
 
+# -------- State init --------
 if "extracted_text" not in st.session_state:
     st.session_state["extracted_text"] = None
 if "full_summary" not in st.session_state:
@@ -356,9 +309,11 @@ def safe_slug(prefix: str = "summary") -> str:
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     return f"{prefix}_{ts}"
 
+# -------- Tabs --------
 if uploaded:
     tabs = st.tabs(["Visual", "Verbal", "Hands-on", "Quiz", "Export"])
 
+    # --- Visual ---
     with tabs[0]:
         st.subheader("🎥 Visual (Videos)")
         if st.button("Detect Topics"):
@@ -370,6 +325,7 @@ if uploaded:
                 detected_topics = unique_words[:5] if unique_words else ["Algorithms"]
             st.success("Topics detected:")
             st.write(", ".join(detected_topics))
+
             videos = fetch_videos_for_topics(detected_topics)
             for topic, items in videos.items():
                 st.markdown(f"**{topic}**")
@@ -380,27 +336,33 @@ if uploaded:
         else:
             st.info("Click **Detect Topics** to populate video resources.")
 
+    # --- Verbal ---
     with tabs[1]:
         st.subheader("📝 Verbal (Rich FULL Summary + Voiceover)")
         text = ensure_text()
+
         if st.button("Generate Rich FULL Summary (entire PDF)"):
             with st.spinner("Summarizing the whole PDF (map → reduce)…"):
                 st.session_state["full_summary"] = ai_summarize_full(text)
+
         if st.session_state["full_summary"]:
             full_summary = st.session_state["full_summary"]
             st.markdown(full_summary)
-            if st.download_button(
-                "Download full_summary.pdf",
-                data=render_pdf_bytes("Full Summary", [{"heading": None, "body": full_summary}]),
-                file_name="full_summary.pdf",
-                mime="application/pdf",
-            ):
-                pass
+
+            full_name = safe_slug("full_summary") + ".md"
+            st.download_button(
+                "Download full_summary.md",
+                data=full_summary.encode("utf-8"),
+                file_name=full_name,
+                mime="text/markdown",
+            )
+
             col1, col2 = st.columns([2, 1])
             with col1:
                 voice = st.selectbox("🎙️ Voice (OpenAI TTS)", ["alloy", "verse", "aria", "coral", "sage", "lumen"], index=0)
             with col2:
                 engine = st.selectbox("Engine", ["OpenAI TTS", "gTTS (fallback)"], index=0)
+
             if st.button("Generate Voiceover (from FULL summary)"):
                 with st.spinner("Generating voiceover…"):
                     if engine == "OpenAI TTS":
@@ -418,6 +380,7 @@ if uploaded:
         else:
             st.info("Click **Generate Rich FULL Summary (entire PDF)** to create a comprehensive, analogy-filled summary and voiceover.")
 
+    # --- Hands-on ---
     with tabs[2]:
         st.subheader("🧪 Hands-on (Interactives)")
         detected_topics = st.session_state.get("detected_topics", [])
@@ -430,16 +393,21 @@ if uploaded:
                 for it in items:
                     st.markdown(f"- [{it['title']}]({it['url']}) — {it['note']}")
             st.session_state["sims"] = sims
+
+        # --- Semantic search over notes ---
         st.markdown("---")
         st.subheader("🔎 Search your notes (semantic)")
-        import numpy as np
+        import numpy as np  # local import to keep top light
+
         @st.cache_data(show_spinner=False)
         def embed_texts(texts: list[str]) -> np.ndarray:
             embs = client.embeddings.create(model="text-embedding-3-small", input=texts)
             return np.array([e.embedding for e in embs.data], dtype="float32")
+
         def cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
             denom = (np.linalg.norm(a) * np.linalg.norm(b)) or 1e-8
             return float(np.dot(a, b) / denom)
+
         q = st.text_input("Ask a question about your PDF")
         if st.button("Search") and q.strip():
             base_text = ensure_text()
@@ -462,6 +430,7 @@ if uploaded:
                 with st.expander("Context"):
                     st.write(context)
 
+    # --- Quiz ---
     with tabs[3]:
         st.subheader("❓ Quiz (Auto-generated MCQs)")
         text = ensure_text()
@@ -486,7 +455,9 @@ if uploaded:
                     raw2 = smart_complete(prompt2, temperature=0.2, max_output_tokens=1000)
                     j2 = json.loads(raw2.replace("```json","").replace("```","").strip())
                     quiz = j2[:num_q]
+
             st.session_state["quiz"] = quiz
+
         quiz = st.session_state.get("quiz", [])
         if quiz:
             for i, q in enumerate(quiz, 1):
@@ -500,27 +471,25 @@ if uploaded:
                 if st.button(f"Check Q{i}", key=f"chk_{i}"):
                     st.info(f"Answer: {q['choices'][q['answer_index']]}")
                     st.caption(q.get("explanation", ""))
-            lines = []
-            for i, q in enumerate(quiz, 1):
-                q_text = f"Q{i}. {q['question']}\n" + "\n".join([f"  {chr(65+k)}. {choice}" for k, choice in enumerate(q["choices"])])
-                ans = q["choices"][q["answer_index"]]
-                expl = q.get("explanation", "")
-                lines.append({"heading": f"Question {i}", "body": f"{q_text}\n\nAnswer: {ans}\nExplanation: {expl}"})
             if st.download_button(
-                "Download quiz.pdf",
-                data=render_pdf_bytes("Auto-generated Quiz", lines),
-                file_name="quiz.pdf",
-                mime="application/pdf",
+                "Download Quiz (JSON)",
+                data=json.dumps(quiz, indent=2).encode("utf-8"),
+                file_name="quiz.json",
+                mime="application/json",
             ):
                 pass
         else:
             st.info("Click **Generate Quiz** to create practice questions from your notes.")
 
+    # --- Export ---
     with tabs[4]:
         st.subheader("📦 Export Study Pack")
+
         detected_topics = st.session_state.get("detected_topics", [])
         videos = st.session_state.get("videos", {})
         sims = st.session_state.get("sims", {})
+
+        # ---- Flashcards (Q/A) ----
         if st.button("Generate Flashcards (Q→A)"):
             full_text = st.session_state.get("extracted_text", "") or ensure_text()
             with st.spinner("Writing flashcards…"):
@@ -530,53 +499,66 @@ if uploaded:
                     f"Notes:\n{truncate_chars(full_text, 9000)}"
                 )
                 cards = smart_complete(prompt, temperature=0.2, max_output_tokens=900)
-                lines_fc = [ln for ln in cards.splitlines() if "\t" in ln]
-                tsv = "\n".join(lines_fc) if lines_fc else cards
-            st.session_state["flashcards_tsv"] = tsv
-        tsv = st.session_state.get("flashcards_tsv")
-        if tsv:
-            fc_sections = []
-            for ln in tsv.splitlines():
-                if "\t" in ln:
-                    q, a = ln.split("\t", 1)
-                    fc_sections.append({"heading": f"Q: {q.strip()}", "body": f"A: {a.strip()}"})
-            if not fc_sections:
-                fc_sections = [{"heading": None, "body": tsv}]
-            if st.download_button(
-                "Download flashcards.pdf",
-                data=render_pdf_bytes("Flashcards (Q → A)", fc_sections),
-                file_name="flashcards.pdf",
-                mime="application/pdf",
-            ):
-                pass
+                lines = [ln for ln in cards.splitlines() if "\t" in ln]
+                tsv = "\n".join(lines) if lines else cards
+            st.download_button(
+                "Download flashcards.tsv",
+                data=tsv.encode("utf-8"),
+                file_name="flashcards.tsv",
+                mime="text/tab-separated-values",
+            )
+
         topics_md = "\n".join(f"- {t}" for t in detected_topics) if detected_topics else "_No topics detected yet._"
+
         visual_lines = []
         for topic, items in videos.items():
             visual_lines.append(f"### {topic}")
             for v in items:
                 visual_lines.append(f"- [{v['title']}]({v['url']}) — {v['note']}")
         visual_md = "\n".join(visual_lines) if visual_lines else "_No visual links._"
+
         hands_lines = []
         for topic, items in sims.items():
             hands_lines.append(f"### {topic}")
             for it in items:
                 hands_lines.append(f"- [{it['title']}]({it['url']}) — {it['note']}")
         hands_md = "\n".join(hands_lines) if hands_lines else "_No interactives._"
+
         full_text = st.session_state.get("extracted_text", "") or ""
         full_summary = st.session_state.get("full_summary", "")
-        sections = []
-        sections.append({"heading": "Detected Topics", "body": topics_md})
-        sections.append({"heading": "Visual Resources", "body": visual_md})
-        sections.append({"heading": "Hands-on Interactives", "body": hands_md})
-        sections.append({"heading": "Full Summary", "body": full_summary if full_summary else "(Generate full summary in Verbal tab.)"})
-        notes_preview = (full_text[:800] + "…") if len(full_text) > 800 else full_text
-        sections.append({"heading": "Notes Preview", "body": notes_preview})
-        st.write("Click to download your current study pack (PDF).")
-        if st.download_button(
-            "Download study_pack.pdf",
-            data=render_pdf_bytes("Study Pack", sections),
-            file_name="study_pack.pdf",
-            mime="application/pdf",
-        ):
-            pass
 
+        study_md = f"""# Study Pack
+
+## Detected Topics
+{topics_md}
+
+---
+
+## Visual Resources
+{visual_md}
+
+---
+
+## Hands-on Interactives
+{hands_md}
+
+---
+
+## Full Summary
+{(full_summary if full_summary else "_(Generate the full summary in the Verbal tab to include it here.)_")}
+
+---
+
+## Notes Preview
+{(full_text[:800] + "…") if len(full_text) > 800 else full_text}
+"""
+        st.write("Click to download your current study pack (Markdown).")
+        st.download_button(
+            "Download study_pack.md",
+            data=study_md.encode("utf-8"),
+            file_name="study_pack.md",
+            mime="text/markdown",
+        )
+
+# -------- Footer ----------
+st.caption(f"AI-powered study assistant — OpenAI ({st.session_state.get('model','gpt-4o-mini')})")
