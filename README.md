@@ -9,7 +9,8 @@ Turn any lecture PDF into **3 learning modes**:
 You can also generate a **voiceover MP3** of the summary.
 
 > **Live Demo:**
-![ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/673254b8-1627-4297-811c-8b21b442bd24)
+![ezgif com-video-to-gif-converter (1)](https://github.com/user-attachments/assets/3220b1de-0d94-4fd4-802f-404565e1b0e4)
+
 
 
  
