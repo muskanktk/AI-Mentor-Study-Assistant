@@ -8,7 +8,15 @@ Turn any lecture PDF into **3 learning modes**:
 
 You can also generate a **voiceover MP3** of the summary.
 
-> **Live Demo:** [https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/](https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/)
+> **Browser Link:**
+
+![REC-20250829163441-ezgif com-optimize (1)](https://github.com/user-attachments/assets/dd3869a2-8aca-4963-9fa9-883afa1f8148)
+
+
+
+
+> 
+> **Browser Link:** [https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/](https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/)
 
 -----
 
