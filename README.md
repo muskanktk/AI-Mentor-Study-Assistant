@@ -124,7 +124,7 @@ AI-Mentor-Study-Assistant/
 ## 🙋 FAQ
 
 **Q: Do I need an OpenAI key?**
-A: No, just your pdf to upload.
+A: Yes, in order for AI to properly summarize the pdf.
 
 **Q: Does it work with scanned PDFs?**
 A: It works best with text-based PDFs. Scanned PDFs may require additional OCR processing.
