@@ -11,8 +11,6 @@ You can also generate a **voiceover MP3** of the summary.
 > **Live Demo:**
 ![ezgif com-video-to-gif-converter (1)](https://github.com/user-attachments/assets/3220b1de-0d94-4fd4-802f-404565e1b0e4)
 
-
-
  
 > **Browser Link:** [https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/](https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/)
 
@@ -126,7 +124,7 @@ AI-Mentor-Study-Assistant/
 ## 🙋 FAQ
 
 **Q: Do I need an OpenAI key?**
-A: Yes, it's required for the summary and other AI-powered features.
+A: No, just your pdf to upload.
 
 **Q: Does it work with scanned PDFs?**
 A: It works best with text-based PDFs. Scanned PDFs may require additional OCR processing.
