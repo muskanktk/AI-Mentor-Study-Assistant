@@ -2,52 +2,58 @@
 
 Turn any lecture PDF into **3 learning modes**:
 
-1. Curated **YouTube** videos for key topics,
-2. An **OpenAI-powered summary** in simple language (with code snippets and analogies), and
-3. **Hands-on practice** with simulations and quizzes.
-   Optionally, generate a **voiceover MP3** of the summary in a voice you choose.
+1.  Curated **YouTube** videos for key topics.
+2.  An **OpenAI-powered summary** in simple language.
+3.  **Hands-on practice** with simulations and quizzes.
 
-**Live demo:** 
+You can also generate a **voiceover MP3** of the summary.
 
+> **Live Demo:** [https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/](https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/)
 
-**Example PDF:** [cs262\_week12\_slides (Tagged).pdf](https://github.com/user-attachments/files/21974421/cs262_week12_slides.15.1.1.-.Tagged.pdf)
+-----
 
+## 🚀 Key Features
 
-## 🚀 Features
+  * **YouTube Topic Guide**: Finds videos aligned with the main concepts in your PDF.
+  * **Plain-English Summary**: Uses OpenAI to condense content, adding examples, code, and analogies.
+  * **MP3 Voiceover**: Generates an audio narration of the summary with multiple voice options.
+  * **Practice Mode**: Creates customizable simulations and quizzes.
+  * **One-Click Export**: Saves everything as a Markdown (`.md`) study file.
 
-*  **YouTube Topic Guide**: Finds videos aligned to the main concepts in your PDF.
-*  **Plain-English Summary**: OpenAI condenses content, adds examples, code, and analogies.
-*  **MP3 Voiceover**: Generate an audio narration of the summary with multiple voice options.
-*  **Practice Mode**: Simulations and configurable quizzes (choose number of questions).
-*  **One-click Export**: Save everything as a `.md` study file for safekeeping.
-
+-----
 
 ## 🛠️ Tech Stack
 
-* **Language:** Python
-* **Frameworks/Libraries:** `streamlit`, `pdfplumber`, `httpx`, `gTTS`, `python-dotenv`, plus standard libs (`os`, `io`, `json`, `datetime`, `urllib.parse`)
-* **Tools:** Git, VS Code / Visual Studio Code
+  * **Language:** Python
+  * **Frameworks:** `streamlit`
+  * **Libraries:** `pdfplumber`, `httpx`, `gTTS`, `python-dotenv`
+  * **Tools:** Git, VS Code
 
+-----
 
 ## 📦 Installation
 
-```bash
-# 1) Clone the repository
-git clone https://github.com/<your-username>/AI-Mentor-Study-Assistant.git
-cd AI-Mentor-Study-Assistant
+To get started, follow these steps:
 
-# 2) Create & activate a virtual environment
-python -m venv venv
-# Mac/Linux
-source venv/bin/activate
-# Windows (PowerShell)
-venv\Scripts\Activate.ps1
+1.  **Clone the repository and navigate into the directory:**
+    ```bash
+    git clone https://github.com/<your-username>/AI-Mentor-Study-Assistant.git
+    cd AI-Mentor-Study-Assistant
+    ```
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv venv
+    # Mac/Linux
+    source venv/bin/activate
+    # Windows (PowerShell)
+    venv\Scripts\Activate.ps1
+    ```
+3.  **Install the dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-# 3) Install dependencies
-pip install -r requirements.txt
-```
-
-**Sample `requirements.txt`:**
+### Sample `requirements.txt`
 
 ```
 streamlit
@@ -55,115 +61,87 @@ pdfplumber
 gTTS
 httpx
 python-dotenv
-certifi
 ```
 
----
+-----
 
-## 🔑 Environment Variables
+## ▶ Run Locally
 
-Create a `.env` file in the project root:
+1.  **Set up your API key:**
+    Create a `.env` file in the project root and add your OpenAI key:
+    ```
+    OPENAI_API_KEY=sk-...
+    ```
+2.  **Start the application:**
+    ```bash
+    streamlit run app.py
+    ```
+    This will open the app in your browser.
 
-```
-OPENAI_API_KEY=sk-...
-# Optional if you use other services:
-# YOUTUBE_API_KEY=...
-```
-
----
-
-## ▶Run Locally
-
-```bash
-streamlit run app.py
-```
-
-Then open the local URL shown in your terminal.
+-----
 
 ## 💡 How to Use
 
-1. **Upload a PDF** (lecture slides, notes, article).
-2. Pick your **learning modes**:
+1.  **Upload a PDF** (lecture slides, notes, or an article).
+2.  **Select your learning modes**: Choose from videos, a summary, a voiceover, or practice questions.
+3.  **Export your study materials**: Click **Export** to save a `.md` file with the summary, links, and notes.
 
-   * *Videos*: fetch topic-aligned YouTube links.
-   * *Summary*: generate a plain-English explanation with examples, code, and analogies.
-   * *Voiceover*: produce an MP3 narration of the summary and play it in the app.
-   * *Practice*: create simulations/quizzes; choose the number of questions.
-3. **Export**: click **Export** to save a `.md` file with the summary, links, and notes.
-
----
+-----
 
 ## 📂 Project Structure
 
 ```
 AI-Mentor-Study-Assistant/
-├─ app.py               # Streamlit entry point
-├─ requirements.txt     # Python dependencies
-├─ README.md            # This file
-├─ .env                 # Your API keys (not committed)
-├─ data/                # Uploaded PDFs / sample assets
-└─ src/
-   ├─ summarizer.py     # OpenAI summary helpers
-   ├─ audio.py          # TTS (gTTS) utilities
-   ├─ quiz.py           # Quiz generation / logic
-   ├─ videos.py         # YouTube topic fetchers
-   └─ utils.py          # shared helpers (parsing, I/O, etc.)
+├─ app.py                # Main Streamlit application
+├─ requirements.txt      # Python dependencies
+├─ README.md             # README
+├─ .env                  # API keys (not shown)
+├─ src/
+│  ├─ audio.py           # Text-to-speech helpers
+│  ├─ quiz.py            # Quiz generation logic
+│  ├─ summarizer.py      # OpenAI summary helpers
+│  ├─ utils.py           # Shared helper functions
+│  └─ videos.py          # YouTube video fetchers
+└─ data/
+   ├─ uploads/           # Uploaded PDFs
+   └─ exports/           # Exported study materials
 ```
 
-> Your exact files may differ—use this as a template.
-
----
-
-## 🌐 Hosted App
-
-* **Browser link:** [https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/](https://ai-mentor-study-assistant-tvv5bhksyvyderelpq8pmh.streamlit.app/)
-* Try it with the **example PDF** above or your own notes.
+-----
 
 ## 🛣️ Roadmap
 
-* [ ] Additional voice models / SSML support
-* [ ] Richer simulations and spaced-repetition scheduling
-* [ ] Per-topic flashcards and cloze deletions
-* [ ] Multi-PDF study packs & cross-topic linking
+  * Additional voice models.
+  * Richer simulations and spaced-repetition scheduling.
+  * Per-topic flashcards.
 
-## FAQ
+-----
+
+## 🙋 FAQ
 
 **Q: Do I need an OpenAI key?**
-A: Yes, for summaries and any OpenAI-powered features. Put it in `.env`.
-
-**Q: Where do exports go?**
-A: The app saves `.md` outputs to a project subfolder (e.g., `data/exports/`) and may let you download directly.
+A: Yes, it's required for the summary and other AI-powered features.
 
 **Q: Does it work with scanned PDFs?**
-A: If OCR is enabled in your build, yes. Otherwise, use a tagged/text PDF.
+A: It works best with text-based PDFs. Scanned PDFs may require additional OCR processing.
 
-## Troubleshooting
+-----
 
-* **`ModuleNotFoundError`**: Re-run `pip install -r requirements.txt` in the active venv.
-* **Streamlit won’t start**: Ensure the venv is active; try `python --version` and `which streamlit`.
-* **API errors**: Check `.env` values and your usage limits.
-* **gTTS network issues**: Ensure your network allows outbound requests; retry or switch networks.
+## 🤝 Contributing
 
-## Contributing
+Please open an issue to discuss any significant changes before submitting a pull request.
 
-Please open an issue to discuss substantial changes first.
+-----
 
-## License
-MIT License – see [LICENSE](LICENSE) for details.
+## 📄 License
 
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-## Acknowledgments
+-----
 
-* OpenAI for summarization APIs
-* Streamlit for rapid UI
-* pdfplumber for PDF text extraction
-* gTTS for lightweight text-to-speech
+## 🙏 Acknowledgments
 
----
-
-## Final Product
-
-- 🎧 Voiceover: [voiceover.mp3](https://github.com/user-attachments/files/21974774/voiceover.3.mp3)  
-- 📘 Study Pack: [study_pack.pdf](https://github.com/user-attachments/files/21974831/study_pack.pdf)  
-- 🃏 Flashcards: [flashcards.pdf](https://github.com/user-attachments/files/21974817/flashcards.pdf)  
-
+  * **OpenAI** for the summarization APIs.
+  * **Streamlit** for the rapid UI development.
+  * **pdfplumber** for PDF text extraction.
+  * **gTTS** for text-to-speech functionality.
