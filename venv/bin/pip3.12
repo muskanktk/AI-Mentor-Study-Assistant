@@ -1,4 +1,4 @@
-#!/workspaces/AI-Mentor-Study-Assistant/venv/bin/python
+#!/workspaces/AI-Mentor-Study-Assistant/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
