@@ -105,6 +105,7 @@ class Metric(_message.Message):
     CHART_TYPE_FIELD_NUMBER: _builtins.int
     FORMAT_FIELD_NUMBER: _builtins.int
     DELTA_DESCRIPTION_FIELD_NUMBER: _builtins.int
+    ICON_FIELD_NUMBER: _builtins.int
     label: _builtins.str
     body: _builtins.str
     delta: _builtins.str
@@ -117,6 +118,10 @@ class Metric(_message.Message):
     """Format string for the value and delta (applied only if they are numeric)."""
     delta_description: _builtins.str
     """Optional description text to display next to the delta value."""
+    icon: _builtins.str
+    """Optional icon displayed inline before the label. Accepts a single-character
+    emoji, a Material icon shortcode (":material/icon_name:"), or "spinner".
+    """
     @_builtins.property
     def label_visibility(self) -> _LabelVisibility_pb2.LabelVisibility: ...
     @_builtins.property
@@ -136,10 +141,11 @@ class Metric(_message.Message):
         chart_type: Global___Metric.ChartType.ValueType = ...,
         format: _builtins.str = ...,
         delta_description: _builtins.str = ...,
+        icon: _builtins.str = ...,
     ) -> None: ...
     _HasFieldArgType: _TypeAlias = _typing.Literal["label_visibility", b"label_visibility"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["body", b"body", "chart_data", b"chart_data", "chart_type", b"chart_type", "color", b"color", "delta", b"delta", "delta_description", b"delta_description", "direction", b"direction", "format", b"format", "help", b"help", "label", b"label", "label_visibility", b"label_visibility", "show_border", b"show_border"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["body", b"body", "chart_data", b"chart_data", "chart_type", b"chart_type", "color", b"color", "delta", b"delta", "delta_description", b"delta_description", "direction", b"direction", "format", b"format", "help", b"help", "icon", b"icon", "label", b"label", "label_visibility", b"label_visibility", "show_border", b"show_border"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 

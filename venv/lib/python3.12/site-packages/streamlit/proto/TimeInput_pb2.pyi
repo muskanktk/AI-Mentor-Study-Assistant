@@ -46,6 +46,7 @@ class TimeInput(_message.Message):
     LABEL_VISIBILITY_FIELD_NUMBER: _builtins.int
     STEP_FIELD_NUMBER: _builtins.int
     QUERY_PARAM_KEY_FIELD_NUMBER: _builtins.int
+    FORMAT_FIELD_NUMBER: _builtins.int
     id: _builtins.str
     label: _builtins.str
     default: _builtins.str
@@ -56,6 +57,10 @@ class TimeInput(_message.Message):
     disabled: _builtins.bool
     step: _builtins.int
     query_param_key: _builtins.str
+    format: _builtins.str
+    """"localized" (use browser locale), "12h", or "24h".
+    When absent, frontend defaults to "24h" for backward compatibility.
+    """
     @_builtins.property
     def label_visibility(self) -> _LabelVisibility_pb2.LabelVisibility: ...
     def __init__(
@@ -72,19 +77,24 @@ class TimeInput(_message.Message):
         label_visibility: _LabelVisibility_pb2.LabelVisibility | None = ...,
         step: _builtins.int = ...,
         query_param_key: _builtins.str | None = ...,
+        format: _builtins.str | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["_default", b"_default", "_query_param_key", b"_query_param_key", "_value", b"_value", "default", b"default", "label_visibility", b"label_visibility", "query_param_key", b"query_param_key", "value", b"value"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal["_default", b"_default", "_format", b"_format", "_query_param_key", b"_query_param_key", "_value", b"_value", "default", b"default", "format", b"format", "label_visibility", b"label_visibility", "query_param_key", b"query_param_key", "value", b"value"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["_default", b"_default", "_query_param_key", b"_query_param_key", "_value", b"_value", "default", b"default", "disabled", b"disabled", "form_id", b"form_id", "help", b"help", "id", b"id", "label", b"label", "label_visibility", b"label_visibility", "query_param_key", b"query_param_key", "set_value", b"set_value", "step", b"step", "value", b"value"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["_default", b"_default", "_format", b"_format", "_query_param_key", b"_query_param_key", "_value", b"_value", "default", b"default", "disabled", b"disabled", "form_id", b"form_id", "format", b"format", "help", b"help", "id", b"id", "label", b"label", "label_visibility", b"label_visibility", "query_param_key", b"query_param_key", "set_value", b"set_value", "step", b"step", "value", b"value"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
     _WhichOneofReturnType__default: _TypeAlias = _typing.Literal["default"]  # noqa: Y015
     _WhichOneofArgType__default: _TypeAlias = _typing.Literal["_default", b"_default"]  # noqa: Y015
+    _WhichOneofReturnType__format: _TypeAlias = _typing.Literal["format"]  # noqa: Y015
+    _WhichOneofArgType__format: _TypeAlias = _typing.Literal["_format", b"_format"]  # noqa: Y015
     _WhichOneofReturnType__query_param_key: _TypeAlias = _typing.Literal["query_param_key"]  # noqa: Y015
     _WhichOneofArgType__query_param_key: _TypeAlias = _typing.Literal["_query_param_key", b"_query_param_key"]  # noqa: Y015
     _WhichOneofReturnType__value: _TypeAlias = _typing.Literal["value"]  # noqa: Y015
     _WhichOneofArgType__value: _TypeAlias = _typing.Literal["_value", b"_value"]  # noqa: Y015
     @_typing.overload
     def WhichOneof(self, oneof_group: _WhichOneofArgType__default) -> _WhichOneofReturnType__default | None: ...
+    @_typing.overload
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__format) -> _WhichOneofReturnType__format | None: ...
     @_typing.overload
     def WhichOneof(self, oneof_group: _WhichOneofArgType__query_param_key) -> _WhichOneofReturnType__query_param_key | None: ...
     @_typing.overload

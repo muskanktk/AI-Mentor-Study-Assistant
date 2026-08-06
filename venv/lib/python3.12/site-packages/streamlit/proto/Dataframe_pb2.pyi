@@ -143,6 +143,7 @@ class Dataframe(_message.Message):
     SELECTION_STATE_FIELD_NUMBER: _builtins.int
     SELECTION_DEFAULT_FIELD_NUMBER: _builtins.int
     BUTTON_CLICK_WIDGETS_FIELD_NUMBER: _builtins.int
+    LAZY_DATA_FIELD_NUMBER: _builtins.int
     id: _builtins.str
     """The id of the widget, this is required if the dataframe is editable"""
     columns: _builtins.str
@@ -187,6 +188,14 @@ class Dataframe(_message.Message):
         so a single widget ID per column is sufficient to handle clicks on any row.
         """
 
+    @_builtins.property
+    def lazy_data(self) -> Global___LazyDataframe:
+        """Lazy-loading metadata. When set, the frontend renders this dataframe in
+        lazy mode: it requests row chunks from the backend on demand instead of
+        receiving the full data in `arrow_data`. The eager `arrow_data` field is
+        left empty for lazy dataframes.
+        """
+
     def __init__(
         self,
         *,
@@ -203,11 +212,14 @@ class Dataframe(_message.Message):
         selection_state: _builtins.str | None = ...,
         selection_default: _builtins.str | None = ...,
         button_click_widgets: _abc.Mapping[_builtins.str, _builtins.str] | None = ...,
+        lazy_data: Global___LazyDataframe | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["_placeholder", b"_placeholder", "_row_height", b"_row_height", "_selection_default", b"_selection_default", "_selection_state", b"_selection_state", "arrow_data", b"arrow_data", "placeholder", b"placeholder", "row_height", b"row_height", "selection_default", b"selection_default", "selection_state", b"selection_state"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal["_lazy_data", b"_lazy_data", "_placeholder", b"_placeholder", "_row_height", b"_row_height", "_selection_default", b"_selection_default", "_selection_state", b"_selection_state", "arrow_data", b"arrow_data", "lazy_data", b"lazy_data", "placeholder", b"placeholder", "row_height", b"row_height", "selection_default", b"selection_default", "selection_state", b"selection_state"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["_placeholder", b"_placeholder", "_row_height", b"_row_height", "_selection_default", b"_selection_default", "_selection_state", b"_selection_state", "arrow_data", b"arrow_data", "button_click_widgets", b"button_click_widgets", "column_order", b"column_order", "columns", b"columns", "disabled", b"disabled", "editing_mode", b"editing_mode", "form_id", b"form_id", "id", b"id", "placeholder", b"placeholder", "row_height", b"row_height", "selection_default", b"selection_default", "selection_mode", b"selection_mode", "selection_state", b"selection_state"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["_lazy_data", b"_lazy_data", "_placeholder", b"_placeholder", "_row_height", b"_row_height", "_selection_default", b"_selection_default", "_selection_state", b"_selection_state", "arrow_data", b"arrow_data", "button_click_widgets", b"button_click_widgets", "column_order", b"column_order", "columns", b"columns", "disabled", b"disabled", "editing_mode", b"editing_mode", "form_id", b"form_id", "id", b"id", "lazy_data", b"lazy_data", "placeholder", b"placeholder", "row_height", b"row_height", "selection_default", b"selection_default", "selection_mode", b"selection_mode", "selection_state", b"selection_state"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType__lazy_data: _TypeAlias = _typing.Literal["lazy_data"]  # noqa: Y015
+    _WhichOneofArgType__lazy_data: _TypeAlias = _typing.Literal["_lazy_data", b"_lazy_data"]  # noqa: Y015
     _WhichOneofReturnType__placeholder: _TypeAlias = _typing.Literal["placeholder"]  # noqa: Y015
     _WhichOneofArgType__placeholder: _TypeAlias = _typing.Literal["_placeholder", b"_placeholder"]  # noqa: Y015
     _WhichOneofReturnType__row_height: _TypeAlias = _typing.Literal["row_height"]  # noqa: Y015
@@ -216,6 +228,8 @@ class Dataframe(_message.Message):
     _WhichOneofArgType__selection_default: _TypeAlias = _typing.Literal["_selection_default", b"_selection_default"]  # noqa: Y015
     _WhichOneofReturnType__selection_state: _TypeAlias = _typing.Literal["selection_state"]  # noqa: Y015
     _WhichOneofArgType__selection_state: _TypeAlias = _typing.Literal["_selection_state", b"_selection_state"]  # noqa: Y015
+    @_typing.overload
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__lazy_data) -> _WhichOneofReturnType__lazy_data | None: ...
     @_typing.overload
     def WhichOneof(self, oneof_group: _WhichOneofArgType__placeholder) -> _WhichOneofReturnType__placeholder | None: ...
     @_typing.overload
@@ -226,3 +240,124 @@ class Dataframe(_message.Message):
     def WhichOneof(self, oneof_group: _WhichOneofArgType__selection_state) -> _WhichOneofReturnType__selection_state | None: ...
 
 Global___Dataframe: _TypeAlias = Dataframe  # noqa: Y015
+
+@_typing.final
+class LazyDataframe(_message.Message):
+    """Metadata for a lazily loaded dataframe. The data itself is fetched on demand
+    in row chunks via BackendOperationRequest/BackendOperationResponse, keyed by
+    `source_id`.
+    """
+
+    DESCRIPTOR: _descriptor.Descriptor
+
+    class _AccessMode:
+        ValueType = _typing.NewType("ValueType", _builtins.int)
+        V: _TypeAlias = ValueType  # noqa: Y015
+
+    class _AccessModeEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[LazyDataframe._AccessMode.ValueType], _builtins.type):
+        DESCRIPTOR: _descriptor.EnumDescriptor
+        ACCESS_MODE_UNSPECIFIED: LazyDataframe._AccessMode.ValueType  # 0
+        RANDOM_ACCESS: LazyDataframe._AccessMode.ValueType  # 1
+        """Arbitrary row ranges can be requested (known-size sources)."""
+        SEQUENTIAL: LazyDataframe._AccessMode.ValueType  # 2
+        """Rows can only be read sequentially (reserved for future streaming
+        sources).
+        """
+
+    class AccessMode(_AccessMode, metaclass=_AccessModeEnumTypeWrapper): ...
+    ACCESS_MODE_UNSPECIFIED: LazyDataframe.AccessMode.ValueType  # 0
+    RANDOM_ACCESS: LazyDataframe.AccessMode.ValueType  # 1
+    """Arbitrary row ranges can be requested (known-size sources)."""
+    SEQUENTIAL: LazyDataframe.AccessMode.ValueType  # 2
+    """Rows can only be read sequentially (reserved for future streaming
+    sources).
+    """
+
+    SOURCE_ID_FIELD_NUMBER: _builtins.int
+    ROW_COUNT_FIELD_NUMBER: _builtins.int
+    PAGE_SIZE_FIELD_NUMBER: _builtins.int
+    ACCESS_MODE_FIELD_NUMBER: _builtins.int
+    INITIAL_CHUNK_FIELD_NUMBER: _builtins.int
+    SORTABLE_FIELD_NUMBER: _builtins.int
+    source_id: _builtins.str
+    """Session-scoped, unguessable id of the backend data source. Used by the
+    frontend to request row chunks. Not usable across sessions.
+    """
+    row_count: _builtins.int
+    """Total number of rows in the source. Always set in the first version
+    (known-size sources). Reserved as optional for future sequential sources.
+    """
+    page_size: _builtins.int
+    """Number of rows the backend serves per chunk. The frontend aligns its chunk
+    requests to this page size.
+    """
+    access_mode: Global___LazyDataframe.AccessMode.ValueType
+    """How the source can be accessed."""
+    sortable: _builtins.bool
+    """Whether server-side sorting is enabled for this source."""
+    @_builtins.property
+    def initial_chunk(self) -> _ArrowData_pb2.ArrowData:
+        """The initial row chunk as an Arrow IPC table including the full schema.
+        For lazy dataframes this carries the schema and the first visible rows.
+        """
+
+    def __init__(
+        self,
+        *,
+        source_id: _builtins.str = ...,
+        row_count: _builtins.int | None = ...,
+        page_size: _builtins.int = ...,
+        access_mode: Global___LazyDataframe.AccessMode.ValueType = ...,
+        initial_chunk: _ArrowData_pb2.ArrowData | None = ...,
+        sortable: _builtins.bool = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["_row_count", b"_row_count", "initial_chunk", b"initial_chunk", "row_count", b"row_count"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["_row_count", b"_row_count", "access_mode", b"access_mode", "initial_chunk", b"initial_chunk", "page_size", b"page_size", "row_count", b"row_count", "sortable", b"sortable", "source_id", b"source_id"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType__row_count: _TypeAlias = _typing.Literal["row_count"]  # noqa: Y015
+    _WhichOneofArgType__row_count: _TypeAlias = _typing.Literal["_row_count", b"_row_count"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__row_count) -> _WhichOneofReturnType__row_count | None: ...
+
+Global___LazyDataframe: _TypeAlias = LazyDataframe  # noqa: Y015
+
+@_typing.final
+class SortState(_message.Message):
+    """Server-side sort state for a lazy dataframe. The `column` value is a stable
+    backend field name from the Arrow schema, not the displayed column label.
+    """
+
+    DESCRIPTOR: _descriptor.Descriptor
+
+    class _SortDirection:
+        ValueType = _typing.NewType("ValueType", _builtins.int)
+        V: _TypeAlias = ValueType  # noqa: Y015
+
+    class _SortDirectionEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[SortState._SortDirection.ValueType], _builtins.type):
+        DESCRIPTOR: _descriptor.EnumDescriptor
+        SORT_DIRECTION_UNSPECIFIED: SortState._SortDirection.ValueType  # 0
+        ASCENDING: SortState._SortDirection.ValueType  # 1
+        DESCENDING: SortState._SortDirection.ValueType  # 2
+
+    class SortDirection(_SortDirection, metaclass=_SortDirectionEnumTypeWrapper): ...
+    SORT_DIRECTION_UNSPECIFIED: SortState.SortDirection.ValueType  # 0
+    ASCENDING: SortState.SortDirection.ValueType  # 1
+    DESCENDING: SortState.SortDirection.ValueType  # 2
+
+    COLUMN_FIELD_NUMBER: _builtins.int
+    DIRECTION_FIELD_NUMBER: _builtins.int
+    column: _builtins.str
+    direction: Global___SortState.SortDirection.ValueType
+    def __init__(
+        self,
+        *,
+        column: _builtins.str = ...,
+        direction: Global___SortState.SortDirection.ValueType = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["column", b"column", "direction", b"direction"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+Global___SortState: _TypeAlias = SortState  # noqa: Y015

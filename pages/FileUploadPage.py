@@ -1,50 +1,187 @@
+import extractTopics
 import streamlit as st
+from database import get_database
 
+# Connect to MongoDB
+db = get_database()
+files_collection = db["uploaded_files"]
+
+# Session state initialization
+if "uploaded_files" not in st.session_state:
+    st.session_state.uploaded_files = set()
+
+if "uploader_key" not in st.session_state:
+    st.session_state.uploader_key = 0
+
+if "selected_tab" not in st.session_state:
+    st.session_state.selected_tab = "Current"
+
+# Updated CSS to pull the container up and seamless folder tab look
 st.markdown(
     """
     <style>
-    /* Remove uploader container */
+    /* File uploader styling fixes */
+
     div[data-testid="stFileUploader"] {
         background: transparent;
         border: none;
         padding: 0;
     }
-
-    div[data-testid="stFileUploader"] section {
-        padding: 0;
-        border: none;
-        background: transparent;
-    }
-
-    /* Hide help text (200MB per file) */
+  
     div[data-testid="stFileUploader"] small {
+        
+        display: none;
+    }
+    div[data-testid="stFileUploader"] section > div > div {
+        
         display: none;
     }
 
-    /* Remove drag/drop text */
-    div[data-testid="stFileUploader"] section > div > div {
-        display: none;
+    /* Reduce vertical spacing under the tab row */
+    div[data-testid="stHorizontalBlock"] {
+        margin-bottom: -16px !important;
+        z-index: 2;
+        position: relative;
+    }
+
+    /* Target tab buttons specifically */
+    div[data-testid="stColumn"] button {
+        border-radius: 8px 8px 0px 0px !important;
+        height: 42px !important;
+        border: 1px solid #d1d5db !important;
+        border-bottom: none !important;
+        background-color: #f3f4f6 !important;
+        margin-bottom: 0px !important;
+    }
+
+    div[data-testid="stColumn"] button:hover {
+        background-color: #e5e7eb !important;
+    }
+
+    /* Pull the container up so it attaches directly under tabs */
+    div[data-testid="stElementContainer"]:has(div[data-testid="stVerticalBlockBorderWrapper"]) {
+        margin-top: 0px !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border-top-left-radius: 0px !important; /* Makes top edge flat under tabs */
+        z-index: 1;
     }
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-# Put uploader on the right
-left, right = st.columns([20, 0.2])
 
+@st.dialog(title="File Upload Page")
+def vote(item):
+    st.write("The File already exists in the database.")
+
+
+# ==========================================
+# Top row: Folder Tabs + Upload
+# ==========================================
+
+col_tab1, col_tab2, empty, col_upload = st.columns(
+    [1.2, 1.2, 5, 2], gap=None, vertical_alignment="bottom"
+)
+
+with col_tab1:
+    if st.button("Current", key="tab_current", use_container_width=True):
+        st.session_state.selected_tab = "Current"
+        st.rerun()
+
+with col_tab2:
+    if st.button("Archive", key="tab_archived", use_container_width=True):
+        st.session_state.selected_tab = "Archived"
+        st.rerun()
+
+with col_upload:
+    uploaded_file = st.file_uploader(
+        "",
+        type=["pdf", "docx"],
+        label_visibility="collapsed",
+        key=f"file_uploader_{st.session_state.uploader_key}",
+    )
+
+if uploaded_file is not None:
+    file_name = uploaded_file.name
+    existing_file = files_collection.find_one({"Content": file_name})
+
+    if existing_file:
+        vote(file_name)
+    else:
+        file_info = {
+            "Content": file_name,
+            "Topics": extractTopics.extract_topics_from_pdf(uploaded_file),
+            "Status": "Current",
+            "Links": file_name,
+        }
+        files_collection.insert_one(file_info)
+        st.session_state.uploader_key += 1
+        st.rerun()
+
+
+# Container for the table
 with st.container(border=True, height=500):
-    with right:
-        uploaded_file = st.file_uploader(
-            "",
-            type="csv",
-            label_visibility="collapsed"
-        )
+    documents = list(files_collection.find({}, {"_id": 0}))
+    statuses = ["Current", "Archived"]
 
-        product_data = {
-        "Content": ["Smartphone", "Smartwatch", "Smart Home Bundle"],
-        "Topics": [":blue[Electronics]", ":green[IoT]", ":violet[Bundle]"],
-        "Status": ["🟢 COMPLETE", "🟡 IN PROGRESS", "🔴 NOT STARTED"],
-        "Links": [1247, 892, 654],
-    }
-    st.table(product_data, border="horizontal")
+    def display_table(status_filter):
+        filtered_documents = [
+            file
+            for file in documents
+            if file.get("Status", "Current") == status_filter
+        ]
+
+        if filtered_documents:
+            col1, col2, col3, col4 = st.columns(4)
+            col1.write("**Content**")
+            col2.write("**Topics**")
+            col3.write("**Status**")
+            col4.write("**Links**")
+
+            for file in filtered_documents:
+                col1, col2, col3, col4 = st.columns(4)
+                col1.write(file["Content"])
+
+
+
+                with col2:
+                    with st.popover("View Topics"):
+                        st.markdown(f"### Topics for {file['Content']}")
+                        st.divider()
+
+                        topics = file["Topics"].split("\n")
+                        for topic in topics:
+                            st.write(topic)
+                            
+
+                with col3:
+                    current_status = file.get("Status", "Current")
+
+                    if current_status == "🟢 COMPLETE":
+                        current_status = "Current"
+                    elif current_status == "🟡 IN PROGRESS":
+                        current_status = "Archived"
+
+                    new_status = st.selectbox(
+                        "Status",
+                        statuses,
+                        index=statuses.index(current_status),
+                        key=f"status_{file['Content']}",
+                        label_visibility="collapsed",
+                    )
+
+                    if new_status != current_status:
+                        files_collection.update_one(
+                            {"Content": file["Content"]},
+                            {"$set": {"Status": new_status}},
+                        )
+                        st.rerun()
+
+                col4.write(file["Links"])
+        else:
+            st.write("No files here.")
+
+    display_table(st.session_state.selected_tab)

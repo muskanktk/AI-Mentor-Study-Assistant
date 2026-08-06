@@ -135,7 +135,7 @@ class Initialize(_message.Message):
     SESSION_ID_FIELD_NUMBER: _builtins.int
     IS_HELLO_FIELD_NUMBER: _builtins.int
     RECOMMEND_SKILLS_INSTALL_FIELD_NUMBER: _builtins.int
-    SKILLS_NUDGE_SUPPRESSED_LOCALITY_FIELD_NUMBER: _builtins.int
+    SKILLS_NUDGE_SUPPRESSED_REASON_FIELD_NUMBER: _builtins.int
     session_id: _builtins.str
     """The AppSession.id for this connection's AppSession.
     This is used to associate uploaded files with the client that uploaded
@@ -150,13 +150,38 @@ class Initialize(_message.Message):
     dismissed the nudge permanently, and the browser is connected directly
     over a loopback address. Frontend treats an unset value as false.
     """
-    skills_nudge_suppressed_locality: _builtins.str
-    """Connection-locality class of an otherwise-eligible nudge that was
-    suppressed because the browser is NOT on a direct-loopback connection:
-    "private" (RFC1918/Docker/VM/LAN), "other" (public/relayed), "unknown"
-    (peer IP unavailable/unparseable), or empty when not applicable. Purely for
-    adoption telemetry — it lets us measure how much of the agent-harness
-    audience the conservative loopback gate excludes.
+    skills_nudge_suppressed_reason: _builtins.str
+    """Why an otherwise-eligible "install skills" nudge was suppressed, or empty
+    when it was shown (or was never eligible in the first place). A bounded,
+    machine-readable vocabulary the frontend forwards to telemetry so
+    suppression is measurable rather than silent:
+      "conflict"             - a one-click install would refuse at every
+                               install target, so nudging can only fail. Shares
+                               the install-failure reason name, so the two
+                               can be compared in one query.
+      "non_loopback_private" - browser is not on a direct-loopback connection;
+      "non_loopback_other"     "private" is RFC1918/Docker/VM/LAN, "other" is
+      "non_loopback_unknown"   public/relayed, "unknown" is an unavailable or
+                               unparseable peer IP. Lets us measure how much of
+                               the agent-harness audience the conservative
+                               loopback gate excludes.
+      "check_failed"         - the eligibility check itself threw, so the
+                               nudge was withheld defensively.
+    The high-volume uninteresting cases (headless, no agent harness, skills
+    already installed, user dismissed) are deliberately NOT reported.
+
+    NOTE: these are wire values, not telemetry labels. The non-loopback reasons
+    are reported under the `skillsNudgeSuppressedNonLocal:<locality>` label the
+    frontend has emitted since 1.59 (the adoption funnel depends on it); every
+    other reason is reported as `skillsNudgeSuppressed:<reason>`. See
+    `skillsNudgeSuppressedLabel` in frontend/.../SkillsNudgeToast/skillsNudge.ts.
+
+    Supersedes the retired field 9 (`skills_nudge_suppressed_locality`), which
+    carried only a bare connection class ("private"/"other"/"unknown"). This
+    took a new number rather than reusing 9 so the meaning of a number never
+    changes: a frontend built against the old schema reads nothing here and
+    stays silent, instead of reading field 9 and finding a reason string where
+    it expected a bare locality.
     """
     @_builtins.property
     def user_info(self) -> Global___UserInfo: ...
@@ -175,11 +200,11 @@ class Initialize(_message.Message):
         session_id: _builtins.str = ...,
         is_hello: _builtins.bool = ...,
         recommend_skills_install: _builtins.bool = ...,
-        skills_nudge_suppressed_locality: _builtins.str = ...,
+        skills_nudge_suppressed_reason: _builtins.str = ...,
     ) -> None: ...
     _HasFieldArgType: _TypeAlias = _typing.Literal["environment_info", b"environment_info", "session_status", b"session_status", "user_info", b"user_info"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["environment_info", b"environment_info", "is_hello", b"is_hello", "recommend_skills_install", b"recommend_skills_install", "session_id", b"session_id", "session_status", b"session_status", "skills_nudge_suppressed_locality", b"skills_nudge_suppressed_locality", "user_info", b"user_info"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["environment_info", b"environment_info", "is_hello", b"is_hello", "recommend_skills_install", b"recommend_skills_install", "session_id", b"session_id", "session_status", b"session_status", "skills_nudge_suppressed_reason", b"skills_nudge_suppressed_reason", "user_info", b"user_info"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 

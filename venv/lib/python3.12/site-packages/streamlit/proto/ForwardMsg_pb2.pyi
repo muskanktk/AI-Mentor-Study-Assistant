@@ -22,6 +22,7 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
+from streamlit.proto import ArrowData_pb2 as _ArrowData_pb2
 from streamlit.proto import AuthRedirect_pb2 as _AuthRedirect_pb2
 from streamlit.proto import AutoRerun_pb2 as _AutoRerun_pb2
 from streamlit.proto import Common_pb2 as _Common_pb2
@@ -224,13 +225,22 @@ class BackendOperationResponse(_message.Message):
 
     REQUEST_ID_FIELD_NUMBER: _builtins.int
     ERROR_MSG_FIELD_NUMBER: _builtins.int
+    ERROR_REASON_FIELD_NUMBER: _builtins.int
     DEFERRED_FILE_FIELD_NUMBER: _builtins.int
     INSTALL_SKILLS_FIELD_NUMBER: _builtins.int
     DISMISS_SKILLS_NUDGE_FIELD_NUMBER: _builtins.int
+    DATAFRAME_CHUNK_FIELD_NUMBER: _builtins.int
     request_id: _builtins.str
     """Matches the request_id from BackendOperationRequest"""
     error_msg: _builtins.str
     """Error message if request failed (empty on success)"""
+    error_reason: _builtins.str
+    """Machine-readable, bounded failure classification (empty on success).
+    Parallels the human-readable error_msg. For the one-click skills install
+    this is the cause of the failure (e.g. "conflict", "write_failed",
+    "source_missing"), forwarded to telemetry so the nudge's install-failure
+    rate can be broken down by cause.
+    """
     @_builtins.property
     def deferred_file(self) -> Global___DeferredFileResponsePayload:
         """Response for deferred file requests"""
@@ -243,20 +253,26 @@ class BackendOperationResponse(_message.Message):
     def dismiss_skills_nudge(self) -> Global___DismissSkillsNudgeResponsePayload:
         """Acknowledgement for permanently dismissing the skills nudge"""
 
+    @_builtins.property
+    def dataframe_chunk(self) -> Global___DataframeChunkResponsePayload:
+        """Response for lazy dataframe row chunk requests"""
+
     def __init__(
         self,
         *,
         request_id: _builtins.str = ...,
         error_msg: _builtins.str = ...,
+        error_reason: _builtins.str = ...,
         deferred_file: Global___DeferredFileResponsePayload | None = ...,
         install_skills: Global___InstallSkillsResponsePayload | None = ...,
         dismiss_skills_nudge: Global___DismissSkillsNudgeResponsePayload | None = ...,
+        dataframe_chunk: Global___DataframeChunkResponsePayload | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["deferred_file", b"deferred_file", "dismiss_skills_nudge", b"dismiss_skills_nudge", "install_skills", b"install_skills", "payload", b"payload"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal["dataframe_chunk", b"dataframe_chunk", "deferred_file", b"deferred_file", "dismiss_skills_nudge", b"dismiss_skills_nudge", "install_skills", b"install_skills", "payload", b"payload"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["deferred_file", b"deferred_file", "dismiss_skills_nudge", b"dismiss_skills_nudge", "error_msg", b"error_msg", "install_skills", b"install_skills", "payload", b"payload", "request_id", b"request_id"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["dataframe_chunk", b"dataframe_chunk", "deferred_file", b"deferred_file", "dismiss_skills_nudge", b"dismiss_skills_nudge", "error_msg", b"error_msg", "error_reason", b"error_reason", "install_skills", b"install_skills", "payload", b"payload", "request_id", b"request_id"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType_payload: _TypeAlias = _typing.Literal["deferred_file", "install_skills", "dismiss_skills_nudge"]  # noqa: Y015
+    _WhichOneofReturnType_payload: _TypeAlias = _typing.Literal["deferred_file", "install_skills", "dismiss_skills_nudge", "dataframe_chunk"]  # noqa: Y015
     _WhichOneofArgType_payload: _TypeAlias = _typing.Literal["payload", b"payload"]  # noqa: Y015
     def WhichOneof(self, oneof_group: _WhichOneofArgType_payload) -> _WhichOneofReturnType_payload | None: ...
 
@@ -286,23 +302,35 @@ Global___DeferredFileResponsePayload: _TypeAlias = DeferredFileResponsePayload  
 @_typing.final
 class InstallSkillsResponsePayload(_message.Message):
     """Response payload for one-click skills install. A successful, empty detail
-    indicates a clean install; failures are reported via the response's
-    error_msg field instead.
+    indicates a clean install; failures are not reported here at all, but via the
+    parent response's error_msg (human-readable) and error_reason (machine-readable).
     """
 
     DESCRIPTOR: _descriptor.Descriptor
 
     DETAIL_FIELD_NUMBER: _builtins.int
+    FALLBACK_REASON_FIELD_NUMBER: _builtins.int
     detail: _builtins.str
     """Optional human-readable detail about the install outcome."""
+    fallback_reason: _builtins.str
+    """Why a project install was rerouted to a global copy, empty when it wasn't:
+      "symlinks_no_privilege" - Windows Developer Mode off (ERROR_PRIVILEGE_NOT_HELD)
+      "symlinks_denied"       - permissions on the project dir refused the probe
+      "symlinks_unsupported"  - the filesystem/OS has no directory symlinks
+      "symlink_failed"        - pre-check passed, then an individual link would not lay
+    Reported on SUCCESS: most Windows users cannot lay symlinks, get rerouted, and
+    then succeed, so this is where that cohort's diagnostic signal lives
+    (skillsNudgeInstallSucceeded:<fallback_reason>).
+    """
     def __init__(
         self,
         *,
         detail: _builtins.str = ...,
+        fallback_reason: _builtins.str = ...,
     ) -> None: ...
     _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["detail", b"detail"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["detail", b"detail", "fallback_reason", b"fallback_reason"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 
@@ -326,6 +354,46 @@ class DismissSkillsNudgeResponsePayload(_message.Message):
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 
 Global___DismissSkillsNudgeResponsePayload: _TypeAlias = DismissSkillsNudgeResponsePayload  # noqa: Y015
+
+@_typing.final
+class DataframeChunkResponsePayload(_message.Message):
+    """Response payload for lazy dataframe row chunks. Carries the requested rows
+    serialized as Arrow IPC bytes.
+    """
+
+    DESCRIPTOR: _descriptor.Descriptor
+
+    SOURCE_ID_FIELD_NUMBER: _builtins.int
+    OFFSET_FIELD_NUMBER: _builtins.int
+    END_OF_STREAM_FIELD_NUMBER: _builtins.int
+    ARROW_DATA_FIELD_NUMBER: _builtins.int
+    source_id: _builtins.str
+    """Echoes the requested source id so the frontend can match the response."""
+    offset: _builtins.int
+    """Row offset of the first row in `arrow_data`."""
+    end_of_stream: _builtins.bool
+    """Reserved for future sequential sources; always false for known-size
+    random-access sources.
+    """
+    @_builtins.property
+    def arrow_data(self) -> _ArrowData_pb2.ArrowData:
+        """The requested rows as an Arrow IPC table."""
+
+    def __init__(
+        self,
+        *,
+        source_id: _builtins.str = ...,
+        offset: _builtins.int = ...,
+        end_of_stream: _builtins.bool = ...,
+        arrow_data: _ArrowData_pb2.ArrowData | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["arrow_data", b"arrow_data"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["arrow_data", b"arrow_data", "end_of_stream", b"end_of_stream", "offset", b"offset", "source_id", b"source_id"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+Global___DataframeChunkResponsePayload: _TypeAlias = DataframeChunkResponsePayload  # noqa: Y015
 
 @_typing.final
 class ForwardMsgMetadata(_message.Message):
