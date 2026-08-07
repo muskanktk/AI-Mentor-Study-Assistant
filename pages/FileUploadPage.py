@@ -2,6 +2,93 @@ import extractTopics
 import streamlit as st
 from database import get_database
 
+
+st.markdown(
+    """
+    <style>
+
+    /* Current tab */
+    div[data-testid="stHorizontalBlock"] > div:nth-child(1) button {
+        background-color: olivedrab;
+        color: white;
+        border-radius: 8px 8px 0px 0px;
+        height: 45px;
+        width: 100%;
+        font-size: 16px;
+        
+
+    }
+    /* Archive tab */
+    div[data-testid="stHorizontalBlock"] > div:nth-child(2) button {
+        background-color: tomato;
+        color: white;
+        border-radius: 8px 8px 0px 0px;
+        height: 45px;
+        width: 100%;
+        font-size: 16px;
+
+    }
+    /*Upload button */
+    div.stButton > button {
+        background-color: maroon;
+        color: white;
+        border-radius:10px;
+    }
+    /* Hover */
+
+    div[data-testid="stFileUploader"] {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+        /* Remove the drag-and-drop area */
+    div[data-testid="stFileUploader"] section {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+        /* Hide upload instructions */
+    div[data-testid="stFileUploader"] small {
+        display: none !important;
+    }
+
+
+    /* Style only the Browse button */
+    div[data-testid="stFileUploader"] button {
+        background-color: maroon !important;
+        color: white !important;
+        border-radius: 10px !important;
+        border: none !important;
+    }
+
+
+    /* Button hover */
+    div[data-testid="stFileUploader"] button:hover {
+        background-color: lightcoral !important;
+        color: black !important;
+    }
+
+
+    /* Remove blue focus/hover area */
+    div[data-testid="stFileUploader"] section:hover {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    
+    div[data-testid="stFileUploader"] section > div {
+        display: none;
+    }
+
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Connect to MongoDB
 db = get_database()
 files_collection = db["uploaded_files"]
@@ -16,62 +103,6 @@ if "uploader_key" not in st.session_state:
 if "selected_tab" not in st.session_state:
     st.session_state.selected_tab = "Current"
 
-# Updated CSS to pull the container up and seamless folder tab look
-st.markdown(
-    """
-    <style>
-    /* File uploader styling fixes */
-
-    div[data-testid="stFileUploader"] {
-        background: transparent;
-        border: none;
-        padding: 0;
-    }
-  
-    div[data-testid="stFileUploader"] small {
-        
-        display: none;
-    }
-    div[data-testid="stFileUploader"] section > div > div {
-        
-        display: none;
-    }
-
-    /* Reduce vertical spacing under the tab row */
-    div[data-testid="stHorizontalBlock"] {
-        margin-bottom: -16px !important;
-        z-index: 2;
-        position: relative;
-    }
-
-    /* Target tab buttons specifically */
-    div[data-testid="stColumn"] button {
-        border-radius: 8px 8px 0px 0px !important;
-        height: 42px !important;
-        border: 1px solid #d1d5db !important;
-        border-bottom: none !important;
-        background-color: #f3f4f6 !important;
-        margin-bottom: 0px !important;
-    }
-
-    div[data-testid="stColumn"] button:hover {
-        background-color: #e5e7eb !important;
-    }
-
-    /* Pull the container up so it attaches directly under tabs */
-    div[data-testid="stElementContainer"]:has(div[data-testid="stVerticalBlockBorderWrapper"]) {
-        margin-top: 0px !important;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        border-top-left-radius: 0px !important; /* Makes top edge flat under tabs */
-        z-index: 1;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 
 @st.dialog(title="File Upload Page")
 def vote(item):
@@ -82,8 +113,9 @@ def vote(item):
 # Top row: Folder Tabs + Upload
 # ==========================================
 
+st.markdown('<div class = "folder-tabs">', unsafe_allow_html=True)
 col_tab1, col_tab2, empty, col_upload = st.columns(
-    [1.2, 1.2, 5, 2], gap=None, vertical_alignment="bottom"
+    [1.2, 1.2, 5, 2], gap= None, vertical_alignment="bottom"
 )
 
 with col_tab1:

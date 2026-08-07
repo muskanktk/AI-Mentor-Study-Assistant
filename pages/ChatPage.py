@@ -2,9 +2,46 @@ import streamlit as st
 from langchain_openai import ChatOpenAI
 from database import get_database
 
+st.markdown(
+    """<style>
+
+    @import url('https://fonts.google.com/specimen/Roboto+Condensed');
+
+    /* Chat Page Title */
+    h1 {
+        color: black;
+        font-family: "Roboto", san-serif;
+        font-weight: 700;
+    }
+
+    /* generate summary button */
+
+
+    div.stButton > button {
+        background-color: maroon;
+        color:white;
+        border-radius:20px;
+    
+
+        
+    }
+    /* hovering of button */
+    div.stButton > button:hover {
+        background-color: lightcoral;
+        color:black;
+        border-radius:20px;
+
+    }
+    
+
+    </style> """,
+
+    unsafe_allow_html = True
+)
+
 db = get_database()
 
-st.title("Chatting with AI")
+st.title("Chatting...")
 
 llm = ChatOpenAI(
     model="gpt-4o-mini",
