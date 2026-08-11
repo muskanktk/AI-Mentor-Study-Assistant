@@ -60,7 +60,7 @@ def Answers_Questions(count):
         st.error("No topics were found for the selected file.")
         return None
 
-    openAIKey = st.secrets["OPENAI_API_KEY"]
+    openAIKey = ["OPENAI_API_KEY"]
     client = OpenAI(api_key=openAIKey)
 
     prompt = (
