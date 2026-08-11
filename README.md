@@ -5,7 +5,10 @@ AI Mentor Study Assistant is an AI-powered learning platform designed to help st
 The application uses **OpenAI** to analyze uploaded course materials, extract important topics, generate summaries, and answer questions. It also integrates the **YouTube Data API** to find educational videos related to extracted topics and **MongoDB Atlas** to store uploaded file information and study resources.
 
 > **Live Demo:**
-> [AI Mentor Study Assistant](file:///Users/muska/Downloads/streamlit-app-2026-08-11-16-56-00.webm/)
+<img width="800" height="521" alt="08111-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/2a10ba7e-4faa-47d8-a9d3-6cf1c4b6f507" />
+
+
+
 
 ---
 
