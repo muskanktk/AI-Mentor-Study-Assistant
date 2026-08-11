@@ -34,9 +34,9 @@ def Pages():
     FileUploadPage = st.Page(
         "pages/FileUploadPage.py", title=" Files", icon = ":material/folder:"
     )
-
+    AQ = st.Page("pages/AQ.py", title="Practice", icon=":material/thumb_up:")
     
-    Navigation = st.navigation([mainPage, ChatPage, FileUploadPage])
+    Navigation = st.navigation([mainPage, ChatPage, FileUploadPage, AQ])
 
     Navigation.run()
 

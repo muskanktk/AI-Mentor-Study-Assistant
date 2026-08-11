@@ -80,19 +80,22 @@ def generate_summary():
     # Get all uploaded files from the database
     uploaded_files = list(db["uploaded_files"].find())
 
-    # Check if there are any uploaded files
     if not uploaded_files:
-        st.warning("No files uploaded yet")
-        st.file_uploader(
-            "Upload a file to generate summary",
-            type=["pdf", "docx"],
-            label_visibility="collapsed",
-        )
+        st.warning("No current files available")
         return 
-    
-    file_names = [file["Content"] for file in uploaded_files]
+
+    currentfiles = [
+        file for file in uploaded_files
+        if file.get("Status") == "Current"
+    ]
+
+    if not currentfiles:
+        st.warning("No current files available")
+        return 
+
+    file_names = [file["Content"] for file in currentfiles]
     selected_file = st.selectbox(
-        "Select a file to generate summary:", 
+        "Select File:", 
         file_names,
         key="file_selectbox",
     )
