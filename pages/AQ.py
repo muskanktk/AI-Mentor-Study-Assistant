@@ -60,7 +60,7 @@ def Answers_Questions(count):
         st.error("No topics were found for the selected file.")
         return None
 
-    openAIKey = ["OPENAI_API_KEY"]
+    openAIKey = st.secrets["OPENAI_API_KEY"]
     client = OpenAI(api_key=openAIKey)
 
     prompt = (
@@ -125,6 +125,7 @@ if st.session_state.get("flashcards"):
         else:
             openAIKey = st.secrets["OPENAI_API_KEY"]
             client = OpenAI(api_key=openAIKey)
+
             answer_text = "\n".join(
                 [f"{idx}. Question: {q} Answer: {a}" for idx, (q, a) in enumerate(zip(questions, answers), start=1)]
             )
